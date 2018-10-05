@@ -23,7 +23,7 @@ function edges(D::DataFrame)
 	y2 = D[:y2]
 
 	N = size(D, 1)
-	x = Array{Float64}(3*N)
+	x = Array{Float64}(undef, 3*N)
 	y = similar(x)
 	
 	nx = 0

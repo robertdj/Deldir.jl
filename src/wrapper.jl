@@ -9,7 +9,7 @@ Remove duplicate tuples `(x[i],y[i])` from the vectors `x` and `y`.
 """
 function remove_duplicates(x::Vector, y::Vector)
 	points = [x y]
-	unique_points = unique(points, 1)
+	unique_points = unique(points, dims = 1)
 
 	return unique_points[:, 1], unique_points[:, 2]
 end
@@ -148,7 +148,7 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, rw::Vector=[0.0;1
 
 	# Call Fortran routine
 	while nerror[] >= 1
-		ccall( (:master_, libdeldir), Void,
+		ccall( (:master_, libdeldir), Nothing,
 		(Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32},
 		Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64}, 
 		Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, 
