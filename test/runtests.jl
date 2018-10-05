@@ -1,5 +1,5 @@
 using Deldir
-using Base.Test
+using Test
 
 # write your own tests here
 N = 100
