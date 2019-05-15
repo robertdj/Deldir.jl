@@ -1,11 +1,12 @@
 using Deldir
 using Test
 
-# write your own tests here
-N = 100
-x = rand(N)
-y = rand(N)
+@testset "Area of Voronoi cells sum to area of window" begin
+    N = 10
+    x = rand(N)
+    y = rand(N)
 
-A = voronoiarea(x, y)
-@test sum(A) ≈ 1
+    A = voronoiarea(x, y)
+    @test sum(A) ≈ 1
+end
 
