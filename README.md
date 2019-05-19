@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/robertdj/Deldir.jl.svg?branch=master)](https://travis-ci.org/robertdj/Deldir.jl)
 [![codecov.io](https://codecov.io/github/robertdj/Deldir.jl/coverage.svg?branch=master)](https://codecov.io/github/robertdj/Deldir.jl?branch=master)
 
-[deldir](https://cran.r-project.org/web/packages/deldir) is an R package for computing Delaunay triangulations and Voronoi/Dirichlet tesselations.
+[deldir](https://cran.r-project.org/package=deldir) is an R package for computing Delaunay triangulations and Voronoi/Dirichlet tesselations.
 This Julia package wraps the Fortran code from deldir.
 
 
@@ -32,9 +32,9 @@ Using the results from above this can be plotted using e.g. the [Plots package](
 
 ```julia
 using Plots
-scatter(x, y, xlim=(0,1), ylim=(0,1), markersize=6, label="generators")
-plot!(Dx, Dy, label="Delaunay")
-plot!(Vx, Vy, style=:dash, label="Voronoi")
+scatter(x, y, xlim = (0,1), ylim = (0,1), markersize = 6, label = "generators")
+plot!(Dx, Dy, label = "Delaunay")
+plot!(Vx, Vy, style = :dash, label = "Voronoi")
 ```
 
 One realization looks like the following.
