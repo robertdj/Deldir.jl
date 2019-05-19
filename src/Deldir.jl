@@ -2,13 +2,13 @@ module Deldir
 
 using DataFrames
 
-const libdeldir = joinpath(dirname(@__FILE__), "..", "deps", "deldir.so")
+# Get path for libdeldir.so as libdeldir
+depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
+if isfile(depsfile)
+	include(depsfile)
+end
 
 export
-	# Type
-	DelDir,
-
-	# Functions
 	deldir,
 	voronoiarea,
 	edges

@@ -1,7 +1,15 @@
 name = "Deldir"
 uuid = "64db5801-a3ae-51a7-b7d2-a0a5f0813e47"
-version = "1.0.0"
+authors = ["Robert DJ <git@dahl-jacobsen.dk>"]
+version = "1.0.1"
 
 [deps]
+BinaryProvider = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
