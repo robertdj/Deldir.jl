@@ -1,6 +1,7 @@
 # Deldir
 
 [![Build Status](https://travis-ci.org/robertdj/Deldir.jl.svg?branch=master)](https://travis-ci.org/robertdj/Deldir.jl)
+[![AppVeyor](https://ci.appveyor.com/api/projects/status/ox6gslc6nm58sbka?svg=true)](https://ci.appveyor.com/project/robertdj/deldir-jl)
 [![codecov.io](https://codecov.io/github/robertdj/Deldir.jl/coverage.svg?branch=master)](https://codecov.io/github/robertdj/Deldir.jl?branch=master)
 
 [deldir](https://cran.r-project.org/package=deldir) is an R package for computing Delaunay triangulations and Voronoi/Dirichlet tesselations.
@@ -47,13 +48,8 @@ One realization looks like the following.
 Install the package by running
 
 ```julia
-Pkg.add("Deldir")
+]add Deldir
 ```
-
-As mentioned, this package is a wrapper for a Fortran library.
-Compilation is performed with `gfortran` and I have only tested this on OS X Yosemite and Linux Mint.
-
-To re-compile the Fortran code, run `Pkg.build("Deldir")`.
 
 
 ## Motivation
