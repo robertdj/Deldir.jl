@@ -48,13 +48,8 @@ One realization looks like the following.
 Install the package by running
 
 ```julia
-Pkg.add("Deldir")
+]add Deldir
 ```
-
-As mentioned, this package is a wrapper for a Fortran library.
-Compilation is performed with `gfortran` and I have only tested this on OS X Yosemite and Linux Mint.
-
-To re-compile the Fortran code, run `Pkg.build("Deldir")`.
 
 
 ## Motivation
