@@ -26,7 +26,7 @@ macro initialize()
 		# Therefore it is not an argument to the wrapper
 		sort = 1
 
-		x, y = remove_duplicates(x,y)
+		x, y = remove_duplicates(x, y)
 		num_points = length(x)
 
 		# Dummy points: Ignored!
