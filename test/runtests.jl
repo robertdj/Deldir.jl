@@ -4,13 +4,21 @@ using Test
 import DataFrames
 
 
-@testset "A Voronoi cell for each generator" begin
+@testset "Deldir output are expected dataframes" begin
     N = rand(5:15)
     x = rand(N)
     y = rand(N)
-    summ = deldir(x, y)[3]
+    del, vor, summ = deldir(x, y)
 
+    @test DataFrames.names(del) == [:x1, :y1, :x2, :y2, :ind1, :ind2]
+
+    @test DataFrames.names(vor) == [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2]
+
+    @test DataFrames.names(summ) == [:x, :y, :ntri, :del_area, :n_tside, :nbpt, :vor_area]
     @test DataFrames.nrow(summ) == N
+
+    @test summ[:x] == x
+    @test summ[:y] == y
 end
 
 
@@ -36,13 +44,17 @@ end
 
     @test sum(A) ≈ 1 atol = 0.001
 
-    A = voronoiarea(x, y, [0., 2., -0.5, 1.])
-    @test sum(A) ≈ 3 atol = 0.001
+    rw = [-rand(); 1 + rand(); -rand(); 1 + rand()]
+    rw_area = (rw[2] - rw[1])*(rw[4] - rw[3])
+
+    A = voronoiarea(x, y, rw)
+
+    @test sum(A) ≈ rw_area atol = 0.001
 end
 
 
 @testset "Error when points are outside window" begin
-    x = [-0.1, 0.5]
+    x = [-rand(), rand()]
     y = rand(2)
 
     @test_throws DomainError deldir(x, y)
