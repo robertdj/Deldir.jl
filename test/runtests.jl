@@ -53,9 +53,18 @@ end
 end
 
 
-@testset "Error when points are outside window" begin
-    x = [-rand(), rand()]
-    y = rand(2)
-
-    @test_throws DomainError deldir(x, y)
+@testset "Errors with inappropriate input" begin
+    @testset "Error when points are outside window" begin
+        x = [-rand(), rand()]
+        y = rand(2)
+    
+        @test_throws DomainError deldir(x, y)
+    end
+    
+    @testset "Error number of x's and y's are not equal" begin
+        x = rand(rand(2:7))
+        y = rand(rand(8:12))
+    
+        @test_throws DimensionMismatch deldir(x, y)
+    end
 end
