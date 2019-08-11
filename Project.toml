@@ -1,7 +1,7 @@
 name = "Deldir"
 uuid = "64db5801-a3ae-51a7-b7d2-a0a5f0813e47"
 authors = ["Robert DJ <git@dahl-jacobsen.dk>"]
-version = "1.0.1"
+version = "1.0.2"
 
 [deps]
 BinaryProvider = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
