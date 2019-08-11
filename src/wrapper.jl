@@ -44,18 +44,16 @@ macro initialize()
 		ntdir = 3*npd
 
 		# Set up dimensioning constants which might need to be increased
-		madj = max( 20, ceil(Int32,3*sqrt(ntot)) )
-		tadj = (madj+1)*(ntot+4)
-		ndel = Int32[ madj*(madj+1)/2 ]
+		madj = max(20, ceil(Int32, 3*sqrt(ntot)))
+		tadj = (madj + 1)*(ntot + 4)
+		ndel = Int32[madj*(madj + 1)/2]
 		tdel = 6*ndel[]
 		ndir = copy(ndel)
 		tdir = 8*ndir[]
 
 		nadj   = zeros(Int32, tadj)
-		ind    = zeros(Int32, npd)
-		tx     = zeros(Float64, npd)
-		ty     = zeros(Float64, npd)
-		ilist  = zeros(Int32, npd)
+        tx     = zeros(Float64, npd)
+        ty     = zeros(Float64, npd)
 		delsgs = zeros(Float64, tdel)
 		delsum = zeros(Float64, ntdel)
 		dirsgs = zeros(Float64, tdir)
@@ -74,10 +72,8 @@ Allocate input to be modified by the deldir Fortran routine
 macro allocate()
 	esc(quote
 		nadj   = zeros(Int32, tadj)
-		ind    = zeros(Int32, npd)
-		tx     = zeros(Float64, npd)
-		ty     = zeros(Float64, npd)
-		ilist  = zeros(Int32, npd)
+        tx     = zeros(Float64, npd)
+        ty     = zeros(Float64, npd)
 		delsgs = zeros(Float64, tdel)
 		delsum = zeros(Float64, ntdel)
 		dirsgs = zeros(Float64, tdir)
@@ -95,17 +91,19 @@ macro error_handling()
 	esc(quote
 		if nerror[] == 4
 			madj = ceil(Int32, 1.2*madj)
-			tadj = (madj+1)*(ntot+4)
-			ndel = max( ndel, div(madj*(madj+1),2) )
+			tadj = (madj + 1)*(ntot + 4)
+			ndel = max(ndel, div(madj*(madj + 1), 2))
 			tdel = 6*ndel[]
 			ndir = copy(ndel)
 			tdir = 8*ndir[]
+
 			@allocate
 		elseif nerror[] == 14 || nerror[] == 15
 			ndel = ceil(Int32, 1.2*ndel)
 			tdel = 6*ndel[]
 			ndir = copy(ndel)
 			tdir = 8*ndir[]
+
 			@allocate
 		elseif nerror[] > 1
 			error("From `deldir` Fortran, nerror = ", nerror[])
@@ -121,12 +119,12 @@ Process output from the deldir Fortran routine
 macro finalize()
 	esc(quote
 		num_del = Int64(ndel[])
-		delsgs = reshape(delsgs[1:6*num_del], 6, num_del)'
+        delsgs  = transpose(reshape(delsgs[1:6*num_del], 6, num_del))
 		num_dir = Int64(ndir[])
-		dirsgs = reshape(dirsgs[1:8*num_dir], 8, num_dir)'
-		delsum = reshape(delsum, npd, 4)
-		dirsum = reshape(dirsum, npd, 3)
-		allsum = hcat(delsum, dirsum)
+        dirsgs  = transpose(reshape(dirsgs[1:8*num_dir], 8, num_dir))
+		delsum  = reshape(delsum, npd, 4)
+		dirsum  = reshape(dirsum, npd, 3)
+		allsum  = hcat(delsum, dirsum)
 	end)
 end
 
@@ -135,11 +133,17 @@ end
 
 Wrapper for the Fortran code that returns the output rather undigested.
 """
-function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, rw::Vector=[0.0;1.0;0.0;1.0]; 
-                       epsilon::Float64=1e-9)
+function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, 
+                       rw::Vector = [0.0; 1.0; 0.0; 1.0]; epsilon::Float64 = 1e-9)
 
-	length(x) == length(y) || throw(DimensionMismatch("Coordinate vectors must be of equal length"))
-    epsilon >= eps(Float64) || throw(DomainError())
+	if length(x) != length(y)
+        throw(DimensionMismatch("Coordinate vectors must be of equal length"))
+    end
+
+    if epsilon < eps(Float64)
+        throw(DomainError())
+    end
+
 	if minimum(x) < rw[1] || maximum(x) > rw[2] && minimum(y) < rw[3] && maximum(y) > rw[4] 
         throw(DomainError("Boundary window is too small"))
     end
@@ -148,15 +152,15 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, rw::Vector=[0.0;1
 
 	# Call Fortran routine
 	while nerror[] >= 1
-		ccall( (:master_, libdeldir), Nothing,
-		(Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32},
-		Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64}, 
-		Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, 
-		Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32}),
-		X, Y, sort, float(rw), npd, 
-		ntot, nadj, madj, ind, tx, ty, 
-		ilist, epsilon, delsgs, ndel, delsum, 
-		dirsgs, ndir, dirsum, nerror
+		ccall((:master_, libdeldir), Cvoid,
+		    (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
+             Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64},
+             Ref{Float64}, Ref{Float64}, Ref{Int32}, 
+             Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32}),
+		    X, Y, float(rw), npd, ntot, 
+            nadj, madj, tx, ty, 
+            epsilon, delsgs, ndel, 
+            delsum, dirsgs, ndir, dirsum, nerror
 		)
 
 		@error_handling
