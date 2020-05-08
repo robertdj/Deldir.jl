@@ -17,7 +17,8 @@ y = rand(8)
 del, vor, summ = deldir(x, y)
 ```
 
-The output from `deldir` are three DataFrames, one for the topology of the Delaunay triangulation, one for topology of the Voronoi tesselation and a summary mainly related to the area of the triangles and Voronoi cells.
+The output from `deldir` are three [DataFrames](https://github.com/JuliaData/DataFrames.jl):
+One for the topology of the Delaunay triangulation; one for topology of the Voronoi tesselation; one with a summary mainly related to the area of the triangles and Voronoi cells.
 
 By default, `deldir` works with points in the unit rectangle, but other bounding rectangles can be specified as a third argument.
 
@@ -52,19 +53,17 @@ Install the package by running
 ```
 
 
-## Motivation
+# Details
 
-This is not the only Julia package for Delaunay/Voronoi computations.
-I am aware of the pure Julia implementation [VoronoiDelaunay](https://github.com/JuliaGeometry/VoronoiDelaunay.jl) and the Boost wrapper [Voronoi](https://github.com/Voxel8/Voronoi.jl).
-
-However, Deldir has two qualities that I value:
+There are other Julia package for interacting with Voronoi cells and Delaunay triangulations.
+The deldir R package has been around for a long time and therefore it is my hope that the Fortran code give correct results.
+Furthermore, deldir has two qualities I value:
 
 - It interacts well with the bounding box.
 - It returns the area of the Voronoi cells *in the same order as the input generators*.
 
-
-**Update 2016-05-05**: 
-I have made the pure Julia package [VoronoiCells](https://github.com/JuliaGeometry/VoronoiCells.jl) with similar functionalities that executes *much* faster.
+I am also the author of the pure Julia package [VoronoiCells](https://github.com/JuliaGeometry/VoronoiCells.jl) with similar functionalities.
+The *VoronoiCells* package executes *much* faster.
 Consider the time taken to run the `voronoiarea` functions of both packages with an increasing number of points:
 
 ![Comparison of Deldir and VoronoiCells](comparison.png)
@@ -73,17 +72,25 @@ The script generating this output is available in the `examples` folder.
 The comparison plot is made with
 ```julia
 julia> versioninfo()
-Julia Version 0.5.0
-Commit 3c9d753 (2016-09-19 18:14 UTC)
+Julia Version 1.1.0
+Commit 80516ca202* (2019-01-21 21:24 UTC)
 Platform Info:
-  System: Linux (x86_64-linux-gnu)
-  CPU: Intel(R) Core(TM) i7-3720QM CPU @ 2.60GHz
+  OS: Linux (x86_64-linux-gnu)
+  CPU: Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz
   WORD_SIZE: 64
-  BLAS: libopenblas (USE64BITINT DYNAMIC_ARCH NO_AFFINITY Sandybridge)
-  LAPACK: libopenblas64_
   LIBM: libopenlibm
-  LLVM: libLLVM-3.7.1 (ORCJIT, ivybridge)
+  LLVM: libLLVM-6.0.1 (ORCJIT, skylake)
 ```
+
+
+## Compiled code
+
+To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) in a [dedicated repository](https://github.com/robertdj/DeldirBuilder).
+
+I am not using the latest version of the Fortran code, because the cross-compilation fails on macOS from version 0.1-16 and onwards.
+I do not have access to a contemporary Mac, so it is difficult for me to troubleshoot the issue.
+If you are using a Mac and would like newer features you are welcome to submit a pull request.
+The [changelog](https://cran.r-project.org/web/packages/deldir/ChangeLog) for the R package may provide guidance to what happened.
 
 
 ## Limitations
@@ -95,12 +102,12 @@ Are you missing anything important?
 Check out the [manual](https://cran.r-project.org/web/packages/deldir/deldir.pdf) for the R package to see if the Fortran library supports it.
 
 
-## Acknowledgement
+# Acknowledgement
 
 [Rolf Turner](https://www.stat.auckland.ac.nz/~rolf) is author of the deldir package for R as well as all Fortran code in this package.
 
 
-## License
+# License
 
 The *Julia code* in this package is MIT licensed and the *Fortran code* is licensed under GPL.
 
