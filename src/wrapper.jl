@@ -210,31 +210,31 @@ function deldir(x::Vector{Float64}, y::Vector{Float64}; args...)
 	del, vor, summ = deldirwrapper(x, y; args...)
 
 	delsgs = DataFrame()
-	delsgs[:x1]   = del[:, 1]
-	delsgs[:y1]   = del[:, 2]
-	delsgs[:x2]   = del[:, 3]
-	delsgs[:y2]   = del[:, 4]
-	delsgs[:ind1] = round.(Int, del[:, 5])
-	delsgs[:ind2] = round.(Int, del[:, 6])
+	delsgs[!, :x1]   = del[:, 1]
+	delsgs[!, :y1]   = del[:, 2]
+	delsgs[!, :x2]   = del[:, 3]
+	delsgs[!, :y2]   = del[:, 4]
+	delsgs[!, :ind1] = round.(Int, del[:, 5])
+	delsgs[!, :ind2] = round.(Int, del[:, 6])
 
 	vorsgs = DataFrame()
-	vorsgs[:x1]   = vor[:, 1]
-	vorsgs[:y1]   = vor[:, 2]
-	vorsgs[:x2]   = vor[:, 3]
-	vorsgs[:y2]   = vor[:, 4]
-	vorsgs[:ind1] = round.(Int, vor[:, 5])
-	vorsgs[:ind2] = round.(Int, vor[:, 6])
-	vorsgs[:bp1]  = vor[:, 7] .== 1
-	vorsgs[:bp2]  = vor[:, 8] .== 1
+	vorsgs[!, :x1]   = vor[:, 1]
+	vorsgs[!, :y1]   = vor[:, 2]
+	vorsgs[!, :x2]   = vor[:, 3]
+	vorsgs[!, :y2]   = vor[:, 4]
+	vorsgs[!, :ind1] = round.(Int, vor[:, 5])
+	vorsgs[!, :ind2] = round.(Int, vor[:, 6])
+	vorsgs[!, :bp1]  = vor[:, 7] .== 1
+	vorsgs[!, :bp2]  = vor[:, 8] .== 1
 
 	summary = DataFrame()
-	summary[:x]        = summ[:, 1]
-	summary[:y]        = summ[:, 2]
-	summary[:ntri]     = round.(Int, summ[:, 3])
-	summary[:del_area] = summ[:, 4]
-	summary[:n_tside]  = round.(Int, summ[:, 5])
-	summary[:nbpt]     = round.(Int, summ[:, 6])
-	summary[:vor_area] = summ[:, 7]
+	summary[!, :x]        = summ[:, 1]
+	summary[!, :y]        = summ[:, 2]
+	summary[!, :ntri]     = round.(Int, summ[:, 3])
+	summary[!, :del_area] = summ[:, 4]
+	summary[!, :n_tside]  = round.(Int, summ[:, 5])
+	summary[!, :nbpt]     = round.(Int, summ[:, 6])
+	summary[!, :vor_area] = summ[:, 7]
 
 	return delsgs, vorsgs, summary
 end

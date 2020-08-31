@@ -10,15 +10,15 @@ import DataFrames
     y = rand(N)
     del, vor, summ = deldir(x, y)
 
-    @test DataFrames.names(del) == [:x1, :y1, :x2, :y2, :ind1, :ind2]
+    @test DataFrames.names(del) == ["x1", "y1", "x2", "y2", "ind1", "ind2"]
 
-    @test DataFrames.names(vor) == [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2]
+    @test DataFrames.names(vor) == ["x1", "y1", "x2", "y2", "ind1", "ind2", "bp1", "bp2"]
 
-    @test DataFrames.names(summ) == [:x, :y, :ntri, :del_area, :n_tside, :nbpt, :vor_area]
+    @test DataFrames.names(summ) == ["x", "y", "ntri", "del_area", "n_tside", "nbpt", "vor_area"]
     @test DataFrames.nrow(summ) == N
 
-    @test summ[:x] == x
-    @test summ[:y] == y
+    @test summ[!, :x] == x
+    @test summ[!, :y] == y
 end
 
 
@@ -28,11 +28,11 @@ end
     y = rand(N)
     del = deldir(x, y)[1]
 
-    @test del[:x1] == x[del[:ind1]]
-    @test del[:x2] == x[del[:ind2]]
+    @test del[!, :x1] == x[del[!, :ind1]]
+    @test del[!, :x2] == x[del[!, :ind2]]
 
-    @test del[:y1] == y[del[:ind1]]
-    @test del[:y2] == y[del[:ind2]]
+    @test del[!, :y1] == y[del[!, :ind1]]
+    @test del[!, :y2] == y[del[!, :ind2]]
 end
 
 

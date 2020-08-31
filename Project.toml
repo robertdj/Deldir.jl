@@ -8,6 +8,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Deldir_jll = "0cb025a2-29c7-561e-a277-a82c5b779c13"
 
 [compat]
+DataFrames = "0.21"
 julia = "1.5"
 
 [extras]
