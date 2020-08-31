@@ -152,7 +152,7 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64},
 
 	# Call Fortran routine
 	while nerror[] >= 1
-		ccall((:master_, libdeldir), Cvoid,
+		ccall((:master_, Deldir_jll.libdeldir), Cvoid,
 		    (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
              Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64},
              Ref{Float64}, Ref{Float64}, Ref{Int32}, 
