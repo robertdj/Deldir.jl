@@ -1,12 +1,7 @@
 module Deldir
 
 using DataFrames
-
-# Get path for libdeldir.so as libdeldir
-depsfile = joinpath(@__DIR__, "..", "deps", "deps.jl")
-if isfile(depsfile)
-	include(depsfile)
-end
+using Deldir_jll
 
 export
 	deldir,
