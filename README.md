@@ -85,9 +85,10 @@ Platform Info:
 
 ## Compiled code
 
-To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) in a [dedicated repository](https://github.com/robertdj/DeldirBuilder).
+To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) and hosted in the [Julia Packaging organization](https://github.com/JuliaPackaging/Yggdrasil).
 
-I am not using the latest version of the Fortran code, because the cross-compilation fails on macOS from version 0.1-16 and onwards.
+I am not using the latest version of the Fortran code, because the cross-compilation fails on macOS and/or Windows from version 0.1-16 and onwards.
+
 I do not have access to a contemporary Mac, so it is difficult for me to troubleshoot the issue.
 If you are using a Mac and would like newer features you are welcome to submit a pull request.
 The [changelog](https://cran.r-project.org/web/packages/deldir/ChangeLog) for the R package may provide guidance to what happened.
@@ -105,9 +106,4 @@ Check out the [manual](https://cran.r-project.org/web/packages/deldir/deldir.pdf
 # Acknowledgement
 
 [Rolf Turner](https://www.stat.auckland.ac.nz/~rolf) is author of the deldir package for R as well as all Fortran code in this package.
-
-
-# License
-
-The *Julia code* in this package is MIT licensed and the *Fortran code* is licensed under GPL.
 
