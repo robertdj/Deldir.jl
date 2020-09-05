@@ -209,33 +209,45 @@ Likewise for the `bp2` entry and the second endpoint of the edge.
 function deldir(x::Vector{Float64}, y::Vector{Float64}; args...)
 	del, vor, summ = deldirwrapper(x, y; args...)
 
-	delsgs = DataFrame()
-	delsgs[!, :x1]   = del[:, 1]
-	delsgs[!, :y1]   = del[:, 2]
-	delsgs[!, :x2]   = del[:, 3]
-	delsgs[!, :y2]   = del[:, 4]
-	delsgs[!, :ind1] = round.(Int, del[:, 5])
-	delsgs[!, :ind2] = round.(Int, del[:, 6])
+    del_df = DataFrames.DataFrame(
+        [Float64, Float64, Float64, Float64, Int, Int], 
+        [:x1, :y1, :x2, :y2, :ind1, :ind2], 
+        size(del, 1)
+    )
+	del_df[!, :x1]   = del[:, 1]
+	del_df[!, :y1]   = del[:, 2]
+	del_df[!, :x2]   = del[:, 3]
+	del_df[!, :y2]   = del[:, 4]
+	del_df[!, :ind1] = round.(Int, del[:, 5])
+	del_df[!, :ind2] = round.(Int, del[:, 6])
 
-	vorsgs = DataFrame()
-	vorsgs[!, :x1]   = vor[:, 1]
-	vorsgs[!, :y1]   = vor[:, 2]
-	vorsgs[!, :x2]   = vor[:, 3]
-	vorsgs[!, :y2]   = vor[:, 4]
-	vorsgs[!, :ind1] = round.(Int, vor[:, 5])
-	vorsgs[!, :ind2] = round.(Int, vor[:, 6])
-	vorsgs[!, :bp1]  = vor[:, 7] .== 1
-	vorsgs[!, :bp2]  = vor[:, 8] .== 1
+    vor_df = DataFrames.DataFrame(
+        [Float64, Float64, Float64, Float64, Int, Int, Bool, Bool], 
+        [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2], 
+        size(vor, 1)
+    )
+	vor_df[!, :x1]   = vor[:, 1]
+	vor_df[!, :y1]   = vor[:, 2]
+	vor_df[!, :x2]   = vor[:, 3]
+	vor_df[!, :y2]   = vor[:, 4]
+	vor_df[!, :ind1] = round.(Int, vor[:, 5])
+	vor_df[!, :ind2] = round.(Int, vor[:, 6])
+	vor_df[!, :bp1]  = vor[:, 7] .== 1
+	vor_df[!, :bp2]  = vor[:, 8] .== 1
 
-	summary = DataFrame()
-	summary[!, :x]        = summ[:, 1]
-	summary[!, :y]        = summ[:, 2]
-	summary[!, :ntri]     = round.(Int, summ[:, 3])
-	summary[!, :del_area] = summ[:, 4]
-	summary[!, :n_tside]  = round.(Int, summ[:, 5])
-	summary[!, :nbpt]     = round.(Int, summ[:, 6])
-	summary[!, :vor_area] = summ[:, 7]
+    summary_df = DataFrames.DataFrame(
+        [Float64, Float64, Int, Float64, Int, Int, Float64], 
+        [:x, :y, :ntri, :del_area, :n_tside, :nbpt, :vor_area],
+        size(summ, 1)
+    )
+	summary_df[!, :x]        = summ[:, 1]
+	summary_df[!, :y]        = summ[:, 2]
+	summary_df[!, :ntri]     = round.(Int, summ[:, 3])
+	summary_df[!, :del_area] = summ[:, 4]
+	summary_df[!, :n_tside]  = round.(Int, summ[:, 5])
+	summary_df[!, :nbpt]     = round.(Int, summ[:, 6])
+	summary_df[!, :vor_area] = summ[:, 7]
 
-	return delsgs, vorsgs, summary
+    del_df, vor_df, summary_df
 end
 
