@@ -141,11 +141,11 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64},
     end
 
     if epsilon < eps(Float64)
-        throw(DomainError())
+        throw(DomainError(epsilon, "Must be at least `eps(Float64)`"))
     end
 
 	if minimum(x) < rw[1] || maximum(x) > rw[2] && minimum(y) < rw[3] && maximum(y) > rw[4] 
-        throw(DomainError("Boundary window is too small"))
+        throw(DomainError(rw, "Boundary window is too small"))
     end
 
 	@initialize
