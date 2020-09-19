@@ -12,7 +12,7 @@ import DataFrames
 
     @test DataFrames.names(del) == ["x1", "y1", "x2", "y2", "ind1", "ind2"]
 
-    @test DataFrames.names(vor) == ["x1", "y1", "x2", "y2", "ind1", "ind2", "bp1", "bp2"]
+    @test DataFrames.names(vor) == ["x1", "y1", "x2", "y2", "ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"]
 
     @test DataFrames.names(summ) == ["x", "y", "ntri", "del_area", "n_tside", "nbpt", "vor_area"]
     @test DataFrames.nrow(summ) == N
@@ -33,6 +33,19 @@ end
 
     @test del[!, :y1] == y[del[!, :ind1]]
     @test del[!, :y2] == y[del[!, :ind2]]
+end
+
+
+@testset "Line segments of Voronoi cells are within window" begin
+    N = rand(5:15)
+    x = rand(N)
+    y = rand(N)
+    vor = deldir(x, y)[2]
+
+    @test all(0 .<= vor[!, :x1] .<= 1)
+    @test all(0 .<= vor[!, :y1] .<= 1)
+    @test all(0 .<= vor[!, :x2] .<= 1)
+    @test all(0 .<= vor[!, :y2] .<= 1)
 end
 
 

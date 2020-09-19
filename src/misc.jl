@@ -1,5 +1,5 @@
 """
-voronoiarea(x::Vector, y::Vector, rw) -> Vector
+	voronoiarea(x::Vector, y::Vector, rw) -> Vector
 
 Compute the area of each Voronoi cell of the generators `(x[i],y[i])` in the vectors `x` and `y`.
 

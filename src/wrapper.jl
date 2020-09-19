@@ -121,7 +121,7 @@ macro finalize()
 		num_del = Int64(ndel[])
         delsgs  = transpose(reshape(delsgs[1:6*num_del], 6, num_del))
 		num_dir = Int64(ndir[])
-        dirsgs  = transpose(reshape(dirsgs[1:8*num_dir], 8, num_dir))
+        dirsgs  = transpose(reshape(dirsgs[1:10*num_dir], 10, num_dir))
 		delsum  = reshape(delsum, npd, 4)
 		dirsum  = reshape(dirsum, npd, 3)
 		allsum  = hcat(delsum, dirsum)
@@ -141,11 +141,11 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64},
     end
 
     if epsilon < eps(Float64)
-        throw(DomainError())
+        throw(DomainError(epsilon, "Must be at least `eps(Float64)`"))
     end
 
 	if minimum(x) < rw[1] || maximum(x) > rw[2] && minimum(y) < rw[3] && maximum(y) > rw[4] 
-        throw(DomainError("Boundary window is too small"))
+        throw(DomainError(rw, "Boundary window is too small"))
     end
 
 	@initialize
@@ -196,6 +196,7 @@ The output are three `DataFrame`s:
 - The `ind1` and `ind2` entries are the indices of the two points, in the set being triangulated, which are separated by that edge
 - The `bp1` entry indicates whether the first endpoint of the corresponding edge of a Voronoi cell is a boundary point (a point on the boundary of the rectangular window). 
 Likewise for the `bp2` entry and the second endpoint of the edge.
+- The `thirdv1` and `thirdv2` columns are the indices of the respective third vertices of the Delaunay triangle whose circumcentres constitute the corresponding endpoints of the edge under consideration.
 
 ###### `summary`
 
@@ -222,8 +223,8 @@ function deldir(x::Vector{Float64}, y::Vector{Float64}; args...)
 	del_df[!, :ind2] = round.(Int, del[:, 6])
 
     vor_df = DataFrames.DataFrame(
-        [Float64, Float64, Float64, Float64, Int, Int, Bool, Bool], 
-        [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2], 
+        [Float64, Float64, Float64, Float64, Int, Int, Bool, Bool, Int, Int], 
+        [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2, :thirdv1, :thirdv2], 
         size(vor, 1)
     )
 	vor_df[!, :x1]   = vor[:, 1]
@@ -234,6 +235,8 @@ function deldir(x::Vector{Float64}, y::Vector{Float64}; args...)
 	vor_df[!, :ind2] = round.(Int, vor[:, 6])
 	vor_df[!, :bp1]  = vor[:, 7] .== 1
 	vor_df[!, :bp2]  = vor[:, 8] .== 1
+	vor_df[!, :thirdv1] = round.(Int, vor[:, 9])
+	vor_df[!, :thirdv2] = round.(Int, vor[:, 10])
 
     summary_df = DataFrames.DataFrame(
         [Float64, Float64, Int, Float64, Int, Int, Float64], 
