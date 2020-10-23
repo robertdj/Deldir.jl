@@ -74,10 +74,20 @@ end
         @test_throws DomainError deldir(x, y)
     end
     
-    @testset "Error number of x's and y's are not equal" begin
+    @testset "Error when number of x's and y's are not equal" begin
         x = rand(rand(2:7))
         y = rand(rand(8:12))
     
         @test_throws DimensionMismatch deldir(x, y)
     end
 end
+
+
+@testset "Handle Fortran errors" begin
+    # Data from GitHub issue #17
+    x = [0.4, 0.3, 0.5, 0.2406, 0.2964, 0.5498, 0.2332, 0.3, 0.5041, 0.0824, 0.0594, 0.0126, 0.4385, 0.3575, 0.7737, 0.1, 0.1997, 0.6806, 0.8219, 0.0098, 0.4568, 0.0136]
+    y = [0.3856, 0.5588, 0.0, 0.0725, 0.0433, 0.0025, 0.0771, 0.2124, 0.0, 0.2251, 0.7363, 0.3885, 0.0038, 0.0207, 0.0816, 0.2124, 0.1002, 0.0338, 0.3856, 0.4017, 0.0019, 0.616]
+
+    @test_throws BoundsError voronoiarea(x, y)
+end
+
