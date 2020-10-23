@@ -44,9 +44,10 @@ macro initialize()
 		ntdir = 3*npd
 
 		# Set up dimensioning constants which might need to be increased
-		madj = max(20, ceil(Int32, 3*sqrt(ntot)))
-		tadj = (madj + 1)*(ntot + 4)
-		ndel = Int32[madj*(madj + 1)/2]
+		madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
+        madj = Int32[madj_val]
+		tadj = (madj_val + 1)*(ntot + 4)
+		ndel = Int32[madj_val*(madj_val + 1)/2]
 		tdel = 6*ndel[]
 		ndir = copy(ndel)
 		tdir = 8*ndir[]
@@ -90,22 +91,31 @@ Handle errors from the deldir Fortran routine
 macro error_handling()
 	esc(quote
 		if nerror[] == 4
-			madj = ceil(Int32, 1.2*madj)
-			tadj = (madj + 1)*(ntot + 4)
-			ndel = max(ndel, div(madj*(madj + 1), 2))
-			tdel = 6*ndel[]
+            madj_val = ceil(Int32, 1.2*madj[])
+            madj = Int32[madj_val]
+			tadj = (madj_val + 1)*(ntot + 4)
+            ndel_val = max(ndel[], div(madj_val*(madj_val + 1), 2))
+            ndel = Int32[ndel_val]
+			tdel = 6*ndel_val
 			ndir = copy(ndel)
-			tdir = 8*ndir[]
+			tdir = 8*ndel_val
+
+            @info "Fortran error $(nerror[]). Increasing madj to $(madj[])"
 
 			@allocate
 		elseif nerror[] == 14 || nerror[] == 15
-			ndel = ceil(Int32, 1.2*ndel)
-			tdel = 6*ndel[]
+            ndel_val = ceil(Int32, 1.2*ndel[])
+            ndel = Int32[ndel_val]
+			tdel = 6*ndel_val
 			ndir = copy(ndel)
-			tdir = 8*ndir[]
+			tdir = 8*ndel_val
+
+            @info "Fortran error $(nerror[]). Increasing ndel & ndir to $(ndel[])"
 
 			@allocate
 		elseif nerror[] > 1
+            @warn "Fortran error $(nerror[])"
+
 			error("From `deldir` Fortran, nerror = ", nerror[])
 		end
 	end)
