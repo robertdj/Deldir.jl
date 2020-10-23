@@ -92,7 +92,7 @@ macro error_handling()
 		if nerror[] == 4
 			madj = ceil(Int32, 1.2*madj)
 			tadj = (madj + 1)*(ntot + 4)
-			ndel = max(ndel, div(madj*(madj + 1), 2))
+            ndel = max(ndel[], div(madj*(madj + 1), 2))
 			tdel = 6*ndel[]
 			ndir = copy(ndel)
 			tdir = 8*ndir[]
