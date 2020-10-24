@@ -85,7 +85,7 @@ Platform Info:
 
 ## Compiled code
 
-To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) and hosted in the [Julia Packaging organization](https://github.com/JuliaPackaging/Yggdrasil).
+To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) and hosted in the [Julia Packaging organization](https://github.com/JuliaPackaging/Yggdrasil/tree/master/D/Deldir).
 
 I am not using the latest version of the Fortran code, because the cross-compilation fails on macOS and/or Windows from version 0.1-16 and onwards.
 
