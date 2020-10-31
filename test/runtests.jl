@@ -83,11 +83,32 @@ end
 end
 
 
-@testset "Handle Fortran errors" begin
-    # Data from GitHub issue #17
-    x = [0.4, 0.3, 0.5, 0.2406, 0.2964, 0.5498, 0.2332, 0.3, 0.5041, 0.0824, 0.0594, 0.0126, 0.4385, 0.3575, 0.7737, 0.1, 0.1997, 0.6806, 0.8219, 0.0098, 0.4568, 0.0136]
-    y = [0.3856, 0.5588, 0.0, 0.0725, 0.0433, 0.0025, 0.0771, 0.2124, 0.0, 0.2251, 0.7363, 0.3885, 0.0038, 0.0207, 0.0816, 0.2124, 0.1002, 0.0338, 0.3856, 0.4017, 0.0019, 0.616]
+@testset "Fortran errors" begin
+    @testset "Error number 12" begin
+        # Data extracted from deldir::deldir documentation in R
+        # This error number is not documented
+        x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.48294125509417257; 0.21915725460382082; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
+        y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.6748493892029321; 0.9417544056851699; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
 
-    @test_logs (:info, "Fortran error 4. Increasing madj to 24") voronoiarea(x, y)
+        @test_throws ErrorException deldir(x, y)
+    end
+
+    @testset "Triangle problems" begin
+        # Data extracted from deldir::deldir documentation in R
+        # In Fortran code used in Deldir_jll we have error code number 12, but in the current 
+        # version in the R package we get a more elaborate error mesage
+        x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
+        y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
+
+        @test_throws ErrorException deldir(x, y)
+    end
+
+    @testset "Error number 4" begin
+        # Data from GitHub issue #17
+        x = [0.4, 0.3, 0.5, 0.2406, 0.2964, 0.5498, 0.2332, 0.3, 0.5041, 0.0824, 0.0594, 0.0126, 0.4385, 0.3575, 0.7737, 0.1, 0.1997, 0.6806, 0.8219, 0.0098, 0.4568, 0.0136]
+        y = [0.3856, 0.5588, 0.0, 0.0725, 0.0433, 0.0025, 0.0771, 0.2124, 0.0, 0.2251, 0.7363, 0.3885, 0.0038, 0.0207, 0.0816, 0.2124, 0.1002, 0.0338, 0.3856, 0.4017, 0.0019, 0.616]
+
+        @test_logs (:info, "Fortran error 4. Increasing madj to 24") deldir(x, y)
+    end
 end
 
