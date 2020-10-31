@@ -114,8 +114,6 @@ macro error_handling()
 
 			@allocate
 		elseif nerror[] > 1
-            @warn "Fortran error $(nerror[])"
-
 			error("From `deldir` Fortran, nerror = ", nerror[])
 		end
 	end)
@@ -144,7 +142,7 @@ end
 Wrapper for the Fortran code that returns the output rather undigested.
 """
 function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, 
-                       rw::Vector = [0.0; 1.0; 0.0; 1.0]; epsilon::Float64 = 1e-9)
+                       rw::Vector; epsilon::Float64 = 1e-9)
 
 	if length(x) != length(y)
         throw(DimensionMismatch("Coordinate vectors must be of equal length"))
@@ -217,8 +215,8 @@ Likewise for the `bp2` entry and the second endpoint of the edge.
 - The `nbpt` entry is the number of points in which the Voronoi cell intersects the boundary of the rectangular window.
 - The `vor_area` entry is the area of the Voronoi cell surrounding the point.
 """
-function deldir(x::Vector{Float64}, y::Vector{Float64}; args...)
-	del, vor, summ = deldirwrapper(x, y; args...)
+function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0]; args...)
+	del, vor, summ = deldirwrapper(x, y, rw; args...)
 
     del_df = DataFrames.DataFrame(
         [Float64, Float64, Float64, Float64, Int, Int], 
