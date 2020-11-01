@@ -14,6 +14,110 @@ function remove_duplicates(x::Vector, y::Vector)
 	return unique_points[:, 1], unique_points[:, 2]
 end
 
+
+mutable struct DeldirArguments
+    x::Vector{Float64}
+    y::Vector{Float64}
+    rw::Vector{Float64}
+    npd::Vector{Int32}
+    ntot::Vector{Int32}
+    nadj::Vector{Int32}
+    madj::Vector{Int32}
+    tx::Vector{Float64}
+    ty::Vector{Float64}
+    epsilon::Float64
+    #= epsilon::Vector{Float64} =#
+    delsgs::Vector{Float64}
+    ndel::Vector{Int32}
+    delsum::Vector{Float64}
+    dirsgs::Vector{Float64}
+    ndir::Vector{Int32}
+    dirsum::Vector{Float64}
+    nerror::Vector{Int32}
+end
+
+
+function DeldirArguments(x, y, rw, epsilon)
+    x, y = remove_duplicates(x, y)
+    num_points = length(x)
+
+    # Dummy points: Ignored!
+    ndm = 0
+    npd = num_points + ndm
+
+    # The total number of points
+    ntot = npd + 4
+
+    X = [zeros(4); x; zeros(4)]
+    Y = [zeros(4); y; zeros(4)]
+
+    # Set up fixed dimensioning constants
+    ntdel = 4*npd
+    ntdir = 3*npd
+
+    # Set up dimensioning constants which might need to be increased
+	madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
+    madj = Int32[madj_val]
+	tadj = (madj_val + 1)*(ntot + 4)
+	ndel = Int32[madj_val*(madj_val + 1)/2]
+	tdel = 6*ndel[]
+	ndir = copy(ndel)
+	tdir = 8*ndir[]
+
+	nadj   = zeros(Int32, tadj)
+    tx     = zeros(Float64, npd)
+    ty     = zeros(Float64, npd)
+	delsgs = zeros(Float64, tdel)
+	delsum = zeros(Float64, ntdel)
+	dirsgs = zeros(Float64, tdir)
+	dirsum = zeros(Float64, ntdir)
+	nerror = Int32[1]
+
+    DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, 
+    madj, tx, ty, epsilon, delsgs, ndel, delsum, dirsgs, ndir, 
+    dirsum, nerror)
+end
+
+function allocate(args::DeldirArguments)
+    nadj   = zeros(Int32, tadj)
+    tx     = zeros(Float64, npd)
+    ty     = zeros(Float64, npd)
+    delsgs = zeros(Float64, tdel)
+    delsum = zeros(Float64, ntdel)
+    dirsgs = zeros(Float64, tdir)
+    dirsum = zeros(Float64, ntdir)
+    nerror = Int32[1]
+end
+
+function error_handling(args::DeldirArguments)
+    if args.nerror[] == 4
+        madj = ceil(Int32, 1.2*madj)
+        tadj = (madj + 1)*(ntot + 4)
+        ndel = max(ndel, div(madj*(madj + 1), 2))
+        tdel = 6*ndel[]
+        ndir = copy(ndel)
+        tdir = 8*ndir[]
+    elseif args.nerror[] == 14 || nerror[] == 15
+        ndel = ceil(Int32, 1.2*ndel)
+        tdel = 6*ndel[]
+        ndir = copy(ndel)
+        tdir = 8*ndir[]
+    elseif args.nerror[] > 1
+        error("From `deldir` Fortran, nerror = ", nerror[])
+    end
+
+    args.madj = madj
+    args.nadj = zeros(Int32, tadj)
+    args.ndel = Int32[ndel]
+    args.delsgs = zeros(Float64, tdel)
+    args.delsgs = zeros(Float64, tdel)
+    args.ndir = ndir
+    args.dirsgs = zeros(Float64, tdir)
+
+    return args
+end
+
+
 """
 	initialize()
 
@@ -136,6 +240,22 @@ macro finalize()
 	end)
 end
 
+
+function finalize(da::DeldirArguments)
+    num_del = Int64(da.ndel[])
+    delsgs  = transpose(reshape(da.delsgs[1:6*num_del], 6, num_del))
+    num_dir = Int64(da.ndir[])
+    dirsgs  = transpose(reshape(da.dirsgs[1:10*num_dir], 10, num_dir))
+
+    npd = Int64(da.npd[1])
+    delsum = reshape(da.delsum, npd, 4)
+    dirsum = reshape(da.dirsum, npd, 3)
+    allsum = hcat(delsum, dirsum)
+
+    return delsgs, dirsgs, allsum
+end
+
+
 """
 	deldirwrapper(x::Vector{Float64}, y::Vector{Float64}; ...)
 
@@ -156,26 +276,25 @@ function deldirwrapper(x::Vector{Float64}, y::Vector{Float64},
         throw(DomainError(rw, "Boundary window is too small"))
     end
 
-	@initialize
+    da = DeldirArguments(x, y, rw, epsilon)
 
 	# Call Fortran routine
-	while nerror[] >= 1
+	while da.nerror[] >= 1
 		ccall((:master_, Deldir_jll.libdeldir), Cvoid,
 		    (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
              Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64},
              Ref{Float64}, Ref{Float64}, Ref{Int32}, 
              Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32}),
-		    X, Y, float(rw), npd, ntot, 
-            nadj, madj, tx, ty, 
-            epsilon, delsgs, ndel, 
-            delsum, dirsgs, ndir, dirsum, nerror
+		    da.x, da.y, da.rw, da.npd, da.ntot,
+            da.nadj, da.madj, da.tx, da.ty,
+            da.epsilon, da.delsgs, da.ndel,
+            da.delsum, da.dirsgs, da.ndir, da.dirsum, da.nerror
 		)
 
-		@error_handling
+		#= @error_handling =#
 	end
 
-	@finalize
-
+    delsgs, dirsgs, allsum = finalize(da)
 	return delsgs, dirsgs, allsum
 end
 
