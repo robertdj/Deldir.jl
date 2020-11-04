@@ -386,8 +386,9 @@ Likewise for the `bp2` entry and the second endpoint of the edge.
 - The `nbpt` entry is the number of points in which the Voronoi cell intersects the boundary of the rectangular window.
 - The `vor_area` entry is the area of the Voronoi cell surrounding the point.
 """
-function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0]; args...)
-	del, vor, summ = deldirwrapper(x, y, rw; args...)
+function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0], epsilon = 1e-9)
+    da = DeldirArguments(x, y, rw, epsilon)
+    del, vor, summ = deldirwrapper(da)
 
     del_df = DataFrames.DataFrame(
         [Float64, Float64, Float64, Float64, Int, Int], 
