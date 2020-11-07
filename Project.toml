@@ -1,7 +1,7 @@
 name = "Deldir"
 uuid = "64db5801-a3ae-51a7-b7d2-a0a5f0813e47"
 authors = ["Robert DJ <git@dahl-jacobsen.dk>"]
-version = "1.2.3"
+version = "1.2.4"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
