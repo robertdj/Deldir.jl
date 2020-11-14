@@ -80,7 +80,7 @@ function DeldirArguments(x, y, rw, epsilon)
 	ndel = Int32[madj_val*(madj_val + 1)/2]
 	tdel = 6*ndel[]
 	ndir = copy(ndel)
-	tdir = 8*ndir[]
+	tdir = 10*ndir[]
 
 	nadj   = zeros(Int32, tadj)
     tx     = zeros(Float64, npd)
