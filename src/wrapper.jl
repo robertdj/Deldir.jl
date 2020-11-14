@@ -4,7 +4,7 @@
 Remove duplicate tuples `(x[i],y[i])` from the vectors `x` and `y`.
 """
 function remove_duplicates(x::Vector, y::Vector)
-	points = [x y]
+	points = hcat(x, y)
 	unique_points = unique(points, dims = 1)
 
 	return unique_points[:, 1], unique_points[:, 2]
@@ -12,8 +12,8 @@ end
 
 
 mutable struct DeldirArguments
+    # The variables for the master Fortran subroutine
     # The variable names are copied from the R package
-
     x::Vector{Float64}
     y::Vector{Float64}
     rw::Vector{Float64}
@@ -24,7 +24,6 @@ mutable struct DeldirArguments
     tx::Vector{Float64}
     ty::Vector{Float64}
     epsilon::Float64
-    #= epsilon::Vector{Float64} =#
     delsgs::Vector{Float64}
     ndel::Vector{Int32}
     delsum::Vector{Float64}
@@ -33,8 +32,12 @@ mutable struct DeldirArguments
     dirsum::Vector{Float64}
     nerror::Vector{Int32}
 
+    # The variables for sorting the points
+    indices::Vector{Int32}
+    reverse_indices::Vector{Int32}
+
     function DeldirArguments(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-        ndel, delsum, dirsgs, ndir, dirsum, nerror)
+        ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
         if length(x) != length(y)
             throw(DimensionMismatch("Coordinate vectors must be of equal length"))
         end
@@ -48,16 +51,19 @@ mutable struct DeldirArguments
         if min_x < rw[1] || max_x > rw[2] || min_y < rw[3] || max_y > rw[4]
             throw(DomainError(rw, "Boundary window is too small"))
         end
+
+        # indices = Vector{Int32}(undef, length(x))
+        # reverse_indices = similar(indices)
        
         new(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-               ndel, delsum, dirsgs, ndir, dirsum, nerror)
+               ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
     end
 end
 
 
 function DeldirArguments(x, y, rw, epsilon)
-    x, y = remove_duplicates(x, y)
-    num_points = length(x)
+    unique_x, unique_y = remove_duplicates(x, y)
+    num_points = length(unique_x)
 
     # Dummy points: Ignored!
     ndm = 0
@@ -66,8 +72,11 @@ function DeldirArguments(x, y, rw, epsilon)
     # The total number of points
     ntot = npd + 4
 
-    X = [zeros(4); x; zeros(4)]
-    Y = [zeros(4); y; zeros(4)]
+    indices, reverse_indices = sortperm_points!(unique_x, unique_y, rw)
+    # indices = Int32[1]
+    # reverse_indices = Int32[1]
+    X = [zeros(4); unique_x; zeros(4)]
+    Y = [zeros(4); unique_y; zeros(4)]
 
     # Set up fixed dimensioning constants
     ntdel = 4*npd
@@ -93,15 +102,15 @@ function DeldirArguments(x, y, rw, epsilon)
 
     DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, 
     madj, tx, ty, epsilon, delsgs, ndel, delsum, dirsgs, ndir, 
-    dirsum, nerror)
+    dirsum, nerror, indices, reverse_indices)
 end
 
 
-function sortperm_points(x, y, rw)
+function sortperm_points!(x, y, rw)
     n = length(x)
-
-    x_copy = deepcopy(x)
-    y_copy = deepcopy(y)
+    if n != length(y)
+        DimensionMismatch("x and y must have the same length")
+    end
 
     indices = zeros(Int32, n)
     reverse_indices = zeros(Int32, n)
@@ -115,12 +124,12 @@ function sortperm_points(x, y, rw)
     ccall((:binsrt_, Deldir_jll.libdeldir), Cvoid,
         (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
         Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
-        x_copy, y_copy, rw, n, indices,
+        x, y, rw, n, indices,
         reverse_indices, tx, ty, ilst, nerror
     )
 
     if nerror[] > 0
-        error("Mismatch between number of points and number rof sorted points")
+        error("Mismatch between number of points and number of sorted points")
     end
 
     return indices, reverse_indices
@@ -173,16 +182,24 @@ end
 function finalize(da::DeldirArguments)
     num_del = Int64(da.ndel[])
     delsgs  = reshape(da.delsgs[1:6*num_del], 6, num_del) |> transpose
+    ind1 = Int.(delsgs[:, 5])
+    delsgs[:, 5] = da.reverse_indices[ind1]
+    ind2 = Int.(delsgs[:, 6])
+    delsgs[:, 6] = da.reverse_indices[ind2]
     
     num_dir = Int64(da.ndir[])
     dirsgs  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
+    ind1 = Int.(dirsgs[:, 5])
+    dirsgs[:, 5] = da.reverse_indices[ind1]
+    ind2 = Int.(dirsgs[:, 6])
+    dirsgs[:, 6] = da.reverse_indices[ind2]
 
     npd = Int64(da.npd[1])
     delsum = reshape(da.delsum, npd, 4)
     dirsum = reshape(da.dirsum, npd, 3)
     allsum = hcat(delsum, dirsum)
 
-    return delsgs, dirsgs, allsum
+    return delsgs, dirsgs, allsum[da.indices, :]
 end
 
 
