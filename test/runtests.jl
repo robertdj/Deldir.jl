@@ -138,3 +138,21 @@ end
     end
 end
 
+
+@testset "Sort points" begin
+    # Data extracted from deldir::deldir documentation in R. Also used to test errors
+    x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
+    y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
+
+    x_copy = deepcopy(x)
+    y_copy = deepcopy(y)
+
+    rw = [0.0; 1.0; 0.0; 1.0]
+    indices, reverse_indices = Deldir.sortperm_points!(x_copy, y_copy, rw)
+
+    @test x == x_copy[indices]
+    @test x[reverse_indices] == x_copy
+
+    @test y == y_copy[indices]
+    @test y[reverse_indices] == y_copy
+end
