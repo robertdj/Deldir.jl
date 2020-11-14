@@ -5,8 +5,9 @@ Compute the area of each Voronoi cell of the generators `(x[i],y[i])` in the vec
 
 `rw` is the boundary window.
 """
-function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0;1.0;0.0;1.0])
-	summary = deldirwrapper(x, y, rw)[3]
+function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0])
+    da = DeldirArguments(x, y, rw, 1e-9)
+	summary = deldirwrapper(da)[3]
 
 	return summary[:, 7]
 end

@@ -66,9 +66,25 @@ end
 end
 
 
+@testset "A particular output" begin
+    x = [0.25; 0.25; 0.75; 0.75]
+    y = [0.25; 0.75; 0.25; 0.75]
+
+    del, vor, summ = deldir(x, y)
+
+    @test vor[!, "x1"] ≈ [0.0; 0.5; 0.5; 0.5; 0.5]
+    @test vor[!, "y1"] ≈ [0.5; 0.5; 0.5; 1.0; 0.5]
+    @test vor[!, "x2"] ≈ [0.5; 0.5; 0.5; 0.5; 1.0]
+    @test vor[!, "y2"] ≈ [0.5; 0.0; 0.5; 0.5; 0.5]
+
+    @test summ[!, "del_area"] ≈ [0.041666666666666664, 0.08333333333333333, 0.08333333333333333, 0.041666666666666664]
+    @test summ[!, "vor_area"] ≈ [0.25; 0.25; 0.25; 0.25]
+end
+
+
 @testset "Errors with inappropriate input" begin
     @testset "Error when points are outside window" begin
-        x = [-rand(), rand()]
+        x = [-rand(); rand()]
         y = rand(2)
     
         @test_throws DomainError deldir(x, y)

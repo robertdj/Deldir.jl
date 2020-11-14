@@ -8,6 +8,15 @@
 This Julia package wraps the Fortran code from deldir.
 
 
+## Installation
+
+Switch to `Pkg` mode in Julia with `]` and run
+
+```julia
+add Deldir
+```
+
+
 ## Usage
 
 The coordinates of the generators are specified as two vectors that are fed to `deldir`, the main function of this package:
@@ -44,15 +53,6 @@ One realization looks like the following.
 ![Delaunay & Voronoi edges](deldir.png)
 
 
-## Installation
-
-Install the package by running
-
-```julia
-]add Deldir
-```
-
-
 # Details
 
 There are other Julia package for interacting with Voronoi cells and Delaunay triangulations.
@@ -87,11 +87,8 @@ Platform Info:
 
 To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) and hosted in the [Julia Packaging organization](https://github.com/JuliaPackaging/Yggdrasil/tree/master/D/Deldir).
 
-I am not using the latest version of the Fortran code, because the cross-compilation fails on macOS and/or Windows from version 0.1-16 and onwards.
-
-I do not have access to a contemporary Mac, so it is difficult for me to troubleshoot the issue.
-If you are using a Mac and would like newer features you are welcome to submit a pull request.
-The [changelog](https://cran.r-project.org/web/packages/deldir/ChangeLog) for the R package may provide guidance to what happened.
+I am not using the latest version of the Fortran code, because there is a tighter coupling with from version 0.1-16 and onwards.
+In particular, the use of the subroutines `fexit` and `rexit` from R cause problems even when linking against R's libraries.
 
 
 ## Limitations
@@ -105,5 +102,5 @@ Check out the [manual](https://cran.r-project.org/web/packages/deldir/deldir.pdf
 
 # Acknowledgement
 
-[Rolf Turner](https://www.stat.auckland.ac.nz/~rolf) is author of the deldir package for R as well as all Fortran code in this package.
+[Rolf Turner](https://www.stat.auckland.ac.nz/~rolf) is author of the deldir package for R as well as all Fortran code used in this package.
 

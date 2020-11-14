@@ -1,7 +1,3 @@
-# Disclaimer: The macros initialize, error_handling and finalize use variable 
-# names that are copied verbatim from the R package. 
-
-
 """
 	remove_duplicates(x::Vector, y::Vector)
 
@@ -14,170 +10,176 @@ function remove_duplicates(x::Vector, y::Vector)
 	return unique_points[:, 1], unique_points[:, 2]
 end
 
-"""
-	initialize()
 
-Set up input for the deldir Fortran routine
-"""
-macro initialize()
-	esc(quote
-		# According to the documentation in the R package: 
-		# "'sort' would get used only in a de-bugging process"
-		# Therefore it is not an argument to the wrapper
-		sort = 1
+mutable struct DeldirArguments
+    # The variable names are copied from the R package
 
-		x, y = remove_duplicates(x, y)
-		num_points = length(x)
+    x::Vector{Float64}
+    y::Vector{Float64}
+    rw::Vector{Float64}
+    npd::Vector{Int32}
+    ntot::Vector{Int32}
+    nadj::Vector{Int32}
+    madj::Vector{Int32}
+    tx::Vector{Float64}
+    ty::Vector{Float64}
+    epsilon::Float64
+    #= epsilon::Vector{Float64} =#
+    delsgs::Vector{Float64}
+    ndel::Vector{Int32}
+    delsum::Vector{Float64}
+    dirsgs::Vector{Float64}
+    ndir::Vector{Int32}
+    dirsum::Vector{Float64}
+    nerror::Vector{Int32}
 
-		# Dummy points: Ignored!
-		ndm = 0
-		npd = num_points + ndm
-
-		# The total number of points
-		ntot = npd + 4
-
-		X = [zeros(4); x; zeros(4)]
-		Y = [zeros(4); y; zeros(4)]
-
-		# Set up fixed dimensioning constants
-		ntdel = 4*npd
-		ntdir = 3*npd
-
-		# Set up dimensioning constants which might need to be increased
-		madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
-        madj = Int32[madj_val]
-		tadj = (madj_val + 1)*(ntot + 4)
-		ndel = Int32[madj_val*(madj_val + 1)/2]
-		tdel = 6*ndel[]
-		ndir = copy(ndel)
-		tdir = 8*ndir[]
-
-		nadj   = zeros(Int32, tadj)
-        tx     = zeros(Float64, npd)
-        ty     = zeros(Float64, npd)
-		delsgs = zeros(Float64, tdel)
-		delsum = zeros(Float64, ntdel)
-		dirsgs = zeros(Float64, tdir)
-		dirsum = zeros(Float64, ntdir)
-		nerror = Int32[1]
-
-		@allocate
-	end)
+    function DeldirArguments(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
+        ndel, delsum, dirsgs, ndir, dirsum, nerror)
+        if length(x) != length(y)
+            throw(DimensionMismatch("Coordinate vectors must be of equal length"))
+        end
+       
+        if epsilon < eps(Float64)
+            throw(DomainError(epsilon, "Must be at least `eps(Float64)`"))
+        end
+       
+        min_x, max_x = extrema(x)
+        min_y, max_y = extrema(y)
+        if min_x < rw[1] || max_x > rw[2] || min_y < rw[3] || max_y > rw[4]
+            throw(DomainError(rw, "Boundary window is too small"))
+        end
+       
+        new(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
+               ndel, delsum, dirsgs, ndir, dirsum, nerror)
+    end
 end
 
-"""
-	allocate()
 
-Allocate input to be modified by the deldir Fortran routine
-"""
-macro allocate()
-	esc(quote
-		nadj   = zeros(Int32, tadj)
-        tx     = zeros(Float64, npd)
-        ty     = zeros(Float64, npd)
-		delsgs = zeros(Float64, tdel)
-		delsum = zeros(Float64, ntdel)
-		dirsgs = zeros(Float64, tdir)
-		dirsum = zeros(Float64, ntdir)
-		nerror = Int32[1]
-	end)
+function DeldirArguments(x, y, rw, epsilon)
+    x, y = remove_duplicates(x, y)
+    num_points = length(x)
+
+    # Dummy points: Ignored!
+    ndm = 0
+    npd = num_points + ndm
+
+    # The total number of points
+    ntot = npd + 4
+
+    X = [zeros(4); x; zeros(4)]
+    Y = [zeros(4); y; zeros(4)]
+
+    # Set up fixed dimensioning constants
+    ntdel = 4*npd
+    ntdir = 3*npd
+
+    # Set up dimensioning constants which might need to be increased
+	madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
+    madj = Int32[madj_val]
+	tadj = (madj_val + 1)*(ntot + 4)
+	ndel = Int32[madj_val*(madj_val + 1)/2]
+	tdel = 6*ndel[]
+	ndir = copy(ndel)
+	tdir = 10*ndir[]
+
+	nadj   = zeros(Int32, tadj)
+    tx     = zeros(Float64, npd)
+    ty     = zeros(Float64, npd)
+	delsgs = zeros(Float64, tdel)
+	delsum = zeros(Float64, ntdel)
+	dirsgs = zeros(Float64, tdir)
+	dirsum = zeros(Float64, ntdir)
+	nerror = Int32[1]
+
+    DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, 
+    madj, tx, ty, epsilon, delsgs, ndel, delsum, dirsgs, ndir, 
+    dirsum, nerror)
 end
 
-"""
-	error_handling()
 
-Handle errors from the deldir Fortran routine
-"""
-macro error_handling()
-	esc(quote
-		if nerror[] == 4
-            madj_val = ceil(Int32, 1.2*madj[])
-            madj = Int32[madj_val]
-			tadj = (madj_val + 1)*(ntot + 4)
-            ndel_val = max(ndel[], div(madj_val*(madj_val + 1), 2))
-            ndel = Int32[ndel_val]
-			tdel = 6*ndel_val
-			ndir = copy(ndel)
-			tdir = 8*ndel_val
+function error_handling!(da::DeldirArguments)
+    error_number = da.nerror[]
 
-            @info "Fortran error $(nerror[]). Increasing madj to $(madj[])"
+    if error_number == 4
+        madj_val = ceil(Int32, 1.2*da.madj[])
+        da.madj = Int32[madj_val]
 
-			@allocate
-		elseif nerror[] == 14 || nerror[] == 15
-            ndel_val = ceil(Int32, 1.2*ndel[])
-            ndel = Int32[ndel_val]
-			tdel = 6*ndel_val
-			ndir = copy(ndel)
-			tdir = 8*ndel_val
+        tadj = (madj_val + 1)*(da.ntot[] + 4)
+        resize!(da.nadj, tadj)
 
-            @info "Fortran error $(nerror[]). Increasing ndel & ndir to $(ndel[])"
+        ndel_val = max(da.ndel[], div(madj_val*(madj_val + 1), 2))
+        da.ndel = Int32[ndel_val]
+        da.ndir = copy(da.ndel)
 
-			@allocate
-		elseif nerror[] > 1
-			error("From `deldir` Fortran, nerror = ", nerror[])
-		end
-	end)
+        tdel = 6*ndel_val
+        resize!(da.delsgs, tdel)
+
+        tdir = 8*ndel_val
+        resize!(da.dirsgs, tdir)
+
+        @info "Fortran error $(error_number). Increasing madj to $(da.madj[])"
+    elseif error_number == 14 || error_number == 15
+        ndel_val = ceil(Int32, 1.2*ndel[])
+        da.ndel = Int32[ndel_val]
+        da.ndir = copy(ndel)
+
+        tdel = 6*ndel_val
+        resize!(da.delsgs, tdel)
+
+        tdir = 8*ndel_val
+        resize!(da.dirsgs, tdir)
+
+        @info "Fortran error $(error_number). Increasing ndel & ndir to $(da.ndel[])"
+    elseif error_number > 1
+        error("From `deldir` Fortran, nerror = ", error_number)
+    end
+
+    return(da)
 end
 
-"""
-	finalize()
 
-Process output from the deldir Fortran routine
-"""
-macro finalize()
-	esc(quote
-		num_del = Int64(ndel[])
-        delsgs  = transpose(reshape(delsgs[1:6*num_del], 6, num_del))
-		num_dir = Int64(ndir[])
-        dirsgs  = transpose(reshape(dirsgs[1:10*num_dir], 10, num_dir))
-		delsum  = reshape(delsum, npd, 4)
-		dirsum  = reshape(dirsum, npd, 3)
-		allsum  = hcat(delsum, dirsum)
-	end)
+function finalize(da::DeldirArguments)
+    num_del = Int64(da.ndel[])
+    delsgs  = reshape(da.delsgs[1:6*num_del], 6, num_del) |> transpose
+    
+    num_dir = Int64(da.ndir[])
+    dirsgs  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
+
+    npd = Int64(da.npd[1])
+    delsum = reshape(da.delsum, npd, 4)
+    dirsum = reshape(da.dirsum, npd, 3)
+    allsum = hcat(delsum, dirsum)
+
+    return delsgs, dirsgs, allsum
 end
+
 
 """
 	deldirwrapper(x::Vector{Float64}, y::Vector{Float64}; ...)
 
 Wrapper for the Fortran code that returns the output rather undigested.
 """
-function deldirwrapper(x::Vector{Float64}, y::Vector{Float64}, 
-                       rw::Vector; epsilon::Float64 = 1e-9)
-
-	if length(x) != length(y)
-        throw(DimensionMismatch("Coordinate vectors must be of equal length"))
-    end
-
-    if epsilon < eps(Float64)
-        throw(DomainError(epsilon, "Must be at least `eps(Float64)`"))
-    end
-
-	if minimum(x) < rw[1] || maximum(x) > rw[2] && minimum(y) < rw[3] && maximum(y) > rw[4] 
-        throw(DomainError(rw, "Boundary window is too small"))
-    end
-
-	@initialize
-
+function deldirwrapper(da::DeldirArguments)
 	# Call Fortran routine
-	while nerror[] >= 1
+	while da.nerror[] >= 1
 		ccall((:master_, Deldir_jll.libdeldir), Cvoid,
 		    (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
              Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64},
              Ref{Float64}, Ref{Float64}, Ref{Int32}, 
              Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32}),
-		    X, Y, float(rw), npd, ntot, 
-            nadj, madj, tx, ty, 
-            epsilon, delsgs, ndel, 
-            delsum, dirsgs, ndir, dirsum, nerror
+		    da.x, da.y, da.rw, da.npd, da.ntot,
+            da.nadj, da.madj, da.tx, da.ty,
+            da.epsilon, da.delsgs, da.ndel,
+            da.delsum, da.dirsgs, da.ndir, da.dirsum, da.nerror
 		)
 
-		@error_handling
+        error_handling!(da)
 	end
 
-	@finalize
-
+    delsgs, dirsgs, allsum = finalize(da)
 	return delsgs, dirsgs, allsum
 end
+
 
 """
 	deldir(x::Vector, y::Vector; ...)
@@ -215,8 +217,9 @@ Likewise for the `bp2` entry and the second endpoint of the edge.
 - The `nbpt` entry is the number of points in which the Voronoi cell intersects the boundary of the rectangular window.
 - The `vor_area` entry is the area of the Voronoi cell surrounding the point.
 """
-function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0]; args...)
-	del, vor, summ = deldirwrapper(x, y, rw; args...)
+function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0], epsilon = 1e-9)
+    da = DeldirArguments(x, y, rw, epsilon)
+    del, vor, summ = deldirwrapper(da)
 
     del_df = DataFrames.DataFrame(
         [Float64, Float64, Float64, Float64, Int, Int], 
@@ -261,4 +264,3 @@ function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 
 
     del_df, vor_df, summary_df
 end
-
