@@ -130,6 +130,8 @@ function error_handling!(da::DeldirArguments)
         resize!(da.dirsgs, tdir)
 
         @info "Fortran error $(error_number). Increasing ndel & ndir to $(da.ndel[])"
+    elseif error_number == 12
+        error("Vertices of triangle are collinear")
     elseif error_number > 1
         error("From `deldir` Fortran, nerror = ", error_number)
     end
