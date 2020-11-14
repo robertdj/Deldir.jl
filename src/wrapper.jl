@@ -73,8 +73,6 @@ function DeldirArguments(x, y, rw, epsilon)
     ntot = npd + 4
 
     indices, reverse_indices = sortperm_points!(unique_x, unique_y, rw)
-    # indices = Int32[1]
-    # reverse_indices = Int32[1]
     X = [zeros(4); unique_x; zeros(4)]
     Y = [zeros(4); unique_y; zeros(4)]
 
@@ -111,14 +109,13 @@ function sortperm_points!(x, y, rw)
     if n != length(y)
         DimensionMismatch("x and y must have the same length")
     end
-
-    indices = zeros(Int32, n)
-    reverse_indices = zeros(Int32, n)
     
     tx = similar(x)
     ty = similar(y)
 
-    ilst = Vector{Int32}(undef, n)
+    indices = Vector{Int32}(undef, n)
+    reverse_indices = similar(indices)
+    ilst = similar(indices)
     nerror = Int32[1]
 
     ccall((:binsrt_, Deldir_jll.libdeldir), Cvoid,
@@ -157,6 +154,8 @@ function error_handling!(da::DeldirArguments)
         resize!(da.dirsgs, tdir)
 
         @info "Fortran error $(error_number). Increasing madj to $(da.madj[])"
+    elseif error_number == 12
+        error("Vertices of triangle are collinear")
     elseif error_number == 14 || error_number == 15
         ndel_val = ceil(Int32, 1.2*ndel[])
         da.ndel = Int32[ndel_val]
@@ -169,8 +168,6 @@ function error_handling!(da::DeldirArguments)
         resize!(da.dirsgs, tdir)
 
         @info "Fortran error $(error_number). Increasing ndel & ndir to $(da.ndel[])"
-    elseif error_number == 12
-        error("Vertices of triangle are collinear")
     elseif error_number > 1
         error("From `deldir` Fortran, nerror = ", error_number)
     end
