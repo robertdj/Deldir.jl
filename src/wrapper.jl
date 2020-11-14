@@ -97,6 +97,36 @@ function DeldirArguments(x, y, rw, epsilon)
 end
 
 
+function sortperm_points(x, y, rw)
+    n = length(x)
+
+    x_copy = deepcopy(x)
+    y_copy = deepcopy(y)
+
+    indices = zeros(Int32, n)
+    reverse_indices = zeros(Int32, n)
+    
+    tx = similar(x)
+    ty = similar(y)
+
+    ilst = Vector{Int32}(undef, n)
+    nerror = Int32[1]
+
+    ccall((:binsrt_, Deldir_jll.libdeldir), Cvoid,
+        (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
+        Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
+        x_copy, y_copy, rw, n, indices,
+        reverse_indices, tx, ty, ilst, nerror
+    )
+
+    if nerror[] > 0
+        error("Mismatch between number of points and number rof sorted points")
+    end
+
+    return indices, reverse_indices
+end
+
+
 function error_handling!(da::DeldirArguments)
     error_number = da.nerror[]
 
