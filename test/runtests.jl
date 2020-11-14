@@ -97,7 +97,7 @@ end
         x = [-rand(); rand()]
         y = rand(2)
     
-        @test_throws DomainError deldir(x, y)
+        @test_throws ErrorException deldir(x, y)
     end
     
     @testset "Error when number of x's and y's are not equal" begin
@@ -110,15 +110,6 @@ end
 
 
 @testset "Fortran errors" begin
-    @testset "Error number 12" begin
-        # Data extracted from deldir::deldir documentation in R
-        # This error number is not documented
-        x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.48294125509417257; 0.21915725460382082; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
-        y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.6748493892029321; 0.9417544056851699; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
-
-        @test_throws ErrorException deldir(x, y)
-    end
-
     @testset "Triangle problems" begin
         # Data extracted from deldir::deldir documentation in R
         # In Fortran code used in Deldir_jll we have error code number 12, but in the current 
@@ -140,7 +131,8 @@ end
 
 
 @testset "Sort points" begin
-    # Data extracted from deldir::deldir documentation in R. Also used to test errors
+    # Data extracted from deldir::deldir documentation in R where the points *are* shuffled. 
+    # Also used to test errors
     x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
     y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
 
