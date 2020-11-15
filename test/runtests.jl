@@ -73,13 +73,54 @@ end
 
         del, vor, summ = deldir(x, y)
 
+        # Expected output is from R's deldir
+        expected_del = DataFrames.DataFrame(
+            x1 = [0.75; 0.75; 0.75; 0.25; 0.25],
+            y1 = [0.25; 0.75; 0.75; 0.75; 0.75],
+            x2 = [0.25; 0.25; 0.75; 0.25; 0.75],
+            y2 = [0.25; 0.25; 0.25; 0.25; 0.75],
+            ind1 = [3; 4; 4; 2; 2],
+            ind2 = [1; 1; 3; 1; 4]
+        )
+
+        @test del == expected_del
+
+        expected_vor = DataFrames.DataFrame(
+            x1 = [0.5; 0.5; 0.5; 0.0; 0.5],
+            y1 = [0.5; 0.5; 0.5; 0.5; 0.5],
+            x2 = [0.5; 0.5; 1.0; 0.5; 0.5],
+            y2 = [0.0; 0.5; 0.5; 0.5; 1.0],
+            ind1 = [3; 4; 4; 2; 2],
+            ind2 = [1; 1; 3; 1; 4],
+            bp1 = [false; false; false; true; false],
+            bp2 = [true; false; true; false; true],
+            thirdv1 = [3; 4; 1; -2; 1],
+            thirdv2 = [-1; 2; -4; 3; -3]
+        )
+
+        # There is no ≈ for DataFrames
         @test vor[!, "x1"] ≈ [0.5; 0.5; 0.5; 0.0; 0.5]
         @test vor[!, "y1"] ≈ [0.5; 0.5; 0.5; 0.5; 0.5]
         @test vor[!, "x2"] ≈ [0.5; 0.5; 1.0; 0.5; 0.5]
         @test vor[!, "y2"] ≈ [0.0; 0.5; 0.5; 0.5; 1.0]
 
+        @test vor[!, ["ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"]] ==
+            expected_vor[!, ["ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"]]
+
+        expected_summ = DataFrames.DataFrame(
+            x = [0.25; 0.25; 0.75; 0.75],
+            y = [0.25; 0.75; 0.25; 0.75],
+            ntri = [2; 1; 1; 2],
+            del_area = [0.08333; 0.04166; 0.04166; 0.08333],
+            n_tside = [3; 2; 2; 3],
+            nbpt = [2; 2; 2; 2],
+            vor_area = [0.25; 0.25; 0.25; 0.25]
+        )
+
+        # There is no ≈ for DataFrames
         @test summ[!, "del_area"] ≈ [0.08333; 0.04166; 0.04166; 0.08333] atol = 0.001
         @test summ[!, "vor_area"] ≈ [0.25; 0.25; 0.25; 0.25]
+        @test summ[!, ["ntri", "n_tside", "nbpt"]] == expected_summ[!, ["ntri", "n_tside", "nbpt"]]
     end
 
     @testset "Order of points preserved in voronoiarea" begin
