@@ -1,16 +1,3 @@
-"""
-	remove_duplicates(x::Vector, y::Vector)
-
-Remove duplicate tuples `(x[i],y[i])` from the vectors `x` and `y`.
-"""
-function remove_duplicates(x::Vector, y::Vector)
-	points = hcat(x, y)
-	unique_points = unique(points, dims = 1)
-
-	return unique_points[:, 1], unique_points[:, 2]
-end
-
-
 mutable struct DeldirArguments
     # The variables for the master Fortran subroutine
     # The variable names are copied from the R package
@@ -52,11 +39,8 @@ mutable struct DeldirArguments
             throw(DomainError(rw, "Boundary window is too small"))
         end
 
-        # indices = Vector{Int32}(undef, length(x))
-        # reverse_indices = similar(indices)
-       
         new(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-               ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
+            ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
     end
 end
 

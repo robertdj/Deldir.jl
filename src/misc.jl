@@ -1,4 +1,17 @@
 """
+	remove_duplicates(x::Vector, y::Vector)
+
+Remove duplicate tuples `(x[i],y[i])` from the vectors `x` and `y`.
+"""
+function remove_duplicates(x::Vector, y::Vector)
+	points = hcat(x, y)
+	unique_points = unique(points, dims = 1)
+
+	return unique_points[:, 1], unique_points[:, 2]
+end
+
+
+"""
 	voronoiarea(x::Vector, y::Vector, rw) -> Vector
 
 Compute the area of each Voronoi cell of the generators `(x[i],y[i])` in the vectors `x` and `y`.
