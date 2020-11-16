@@ -191,6 +191,16 @@ function finalize(da::DeldirArguments)
     ind2 = Int.(dirsgs[:, 6])
     dirsgs[:, 6] = da.reverse_indices[ind2]
 
+    thirdv1 = Int.(dirsgs[:, 9])
+    idx1 = thirdv1 .>= 0
+    thirdv1[idx1] = da.reverse_indices[thirdv1[idx1]]
+    dirsgs[:, 9] = thirdv1
+
+    thirdv2 = Int.(dirsgs[:, 10])
+    idx2 = thirdv2 .>= 0
+    thirdv2[idx2] = da.reverse_indices[thirdv2[idx2]]
+    dirsgs[:, 10] = thirdv2
+
     npd = Int64(da.npd[1])
     delsum = reshape(da.delsum, npd, 4)
     dirsum = reshape(da.dirsum, npd, 3)

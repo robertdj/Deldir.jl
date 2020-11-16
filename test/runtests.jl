@@ -94,8 +94,8 @@ end
             ind2 = [1; 1; 3; 1; 4],
             bp1 = [false; false; false; true; false],
             bp2 = [true; false; true; false; true],
-            thirdv1 = [3; 4; 1; -2; 1],
-            thirdv2 = [-1; 2; -4; 3; -3]
+            thirdv1 = [4; 2; 1; -2; 1],
+            thirdv2 = [-1; 3; -4; 4; -3]
         )
 
         # There is no ≈ for DataFrames
