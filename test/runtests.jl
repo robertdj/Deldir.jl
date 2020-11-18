@@ -66,19 +66,93 @@ end
 end
 
 
-@testset "A particular output" begin
-    x = [0.25; 0.25; 0.75; 0.75]
-    y = [0.25; 0.75; 0.25; 0.75]
+@testset "Particular outputs" begin
+    @testset "Simple point pattern" begin
+        x = [0.25; 0.25; 0.75; 0.75]
+        y = [0.25; 0.75; 0.25; 0.75]
 
-    del, vor, summ = deldir(x, y)
+        del, vor, summ = deldir(x, y)
 
-    @test vor[!, "x1"] ≈ [0.0; 0.5; 0.5; 0.5; 0.5]
-    @test vor[!, "y1"] ≈ [0.5; 0.5; 0.5; 1.0; 0.5]
-    @test vor[!, "x2"] ≈ [0.5; 0.5; 0.5; 0.5; 1.0]
-    @test vor[!, "y2"] ≈ [0.5; 0.0; 0.5; 0.5; 0.5]
+        # Expected output is from R's deldir
+        expected_del = DataFrames.DataFrame(
+            x1 = [0.75; 0.75; 0.75; 0.25; 0.25],
+            y1 = [0.25; 0.75; 0.75; 0.75; 0.75],
+            x2 = [0.25; 0.25; 0.75; 0.25; 0.75],
+            y2 = [0.25; 0.25; 0.25; 0.25; 0.75],
+            ind1 = [3; 4; 4; 2; 2],
+            ind2 = [1; 1; 3; 1; 4]
+        )
 
-    @test summ[!, "del_area"] ≈ [0.041666666666666664, 0.08333333333333333, 0.08333333333333333, 0.041666666666666664]
-    @test summ[!, "vor_area"] ≈ [0.25; 0.25; 0.25; 0.25]
+        @test del == expected_del
+
+        expected_vor = DataFrames.DataFrame(
+            x1 = [0.5; 0.5; 0.5; 0.0; 0.5],
+            y1 = [0.5; 0.5; 0.5; 0.5; 0.5],
+            x2 = [0.5; 0.5; 1.0; 0.5; 0.5],
+            y2 = [0.0; 0.5; 0.5; 0.5; 1.0],
+            ind1 = [3; 4; 4; 2; 2],
+            ind2 = [1; 1; 3; 1; 4],
+            bp1 = [false; false; false; true; false],
+            bp2 = [true; false; true; false; true],
+            thirdv1 = [4; 2; 1; -2; 1],
+            thirdv2 = [-1; 3; -4; 4; -3]
+        )
+
+        # There is no ≈ for DataFrames
+        @test vor[!, "x1"] ≈ [0.5; 0.5; 0.5; 0.0; 0.5]
+        @test vor[!, "y1"] ≈ [0.5; 0.5; 0.5; 0.5; 0.5]
+        @test vor[!, "x2"] ≈ [0.5; 0.5; 1.0; 0.5; 0.5]
+        @test vor[!, "y2"] ≈ [0.0; 0.5; 0.5; 0.5; 1.0]
+
+        @test vor[!, ["ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"]] ==
+            expected_vor[!, ["ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"]]
+
+        expected_summ = DataFrames.DataFrame(
+            x = [0.25; 0.25; 0.75; 0.75],
+            y = [0.25; 0.75; 0.25; 0.75],
+            ntri = [2; 1; 1; 2],
+            del_area = [0.08333; 0.04166; 0.04166; 0.08333],
+            n_tside = [3; 2; 2; 3],
+            nbpt = [2; 2; 2; 2],
+            vor_area = [0.25; 0.25; 0.25; 0.25]
+        )
+
+        # There is no ≈ for DataFrames
+        @test summ[!, "del_area"] ≈ [0.08333; 0.04166; 0.04166; 0.08333] atol = 0.001
+        @test summ[!, "vor_area"] ≈ [0.25; 0.25; 0.25; 0.25]
+        @test summ[!, ["ntri", "n_tside", "nbpt"]] == expected_summ[!, ["ntri", "n_tside", "nbpt"]]
+    end
+
+    @testset "voronoiarea and deldir gives the same Voronoi area" begin
+        # Points that are *not* sorted. From R documentation
+        x = [2.3, 3.0, 7.0, 1.0, 3.0, 8.0]
+        y = [2.3, 3.0, 2.0, 5.0, 8.0, 9.0]
+
+        rw = [0.0; 10; 0; 10]
+        A = voronoiarea(x, y, rw)
+
+        @test A ≈ [11.737; 10.739; 26.839; 9.503; 21.306; 19.877] atol = 0.001
+
+        summary = deldir(x, y, rw)[3]
+        @test summary[!, "vor_area"] == A
+    end
+
+    @testset "Edges for plotting" begin
+        x = [0.25; 0.75; 0.5]
+        y = [0.25; 0.25; 0.75]
+
+        del, vor, _ = deldir(x, y)
+
+        Dx, Dy = edges(del)
+
+        @test filter(!isnan, Dx) == [0.75; 0.25; 0.5; 0.25; 0.5; 0.75]
+        @test filter(!isnan, Dy) == [0.25; 0.25; 0.75; 0.25; 0.75; 0.25]
+
+        Vx, Vy = edges(vor)
+
+        @test filter(!isnan, Vx) == [0.5; 0.5; 0.0; 0.5; 0.5; 1.0]
+        @test filter(!isnan, Vy) ≈ [0.4375; 0.0; 0.6875; 0.4375; 0.4375; 0.6875] atol = 0.001
+    end
 end
 
 
@@ -87,7 +161,7 @@ end
         x = [-rand(); rand()]
         y = rand(2)
     
-        @test_throws DomainError deldir(x, y)
+        @test_throws ErrorException deldir(x, y)
     end
     
     @testset "Error when number of x's and y's are not equal" begin
@@ -100,15 +174,6 @@ end
 
 
 @testset "Fortran errors" begin
-    @testset "Error number 12" begin
-        # Data extracted from deldir::deldir documentation in R
-        # This error number is not documented
-        x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.48294125509417257; 0.21915725460382082; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
-        y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.6748493892029321; 0.9417544056851699; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
-
-        @test_throws ErrorException deldir(x, y)
-    end
-
     @testset "Triangle problems" begin
         # Data extracted from deldir::deldir documentation in R
         # In Fortran code used in Deldir_jll we have error code number 12, but in the current 
@@ -128,3 +193,22 @@ end
     end
 end
 
+
+@testset "Sort points" begin
+    # Data extracted from deldir::deldir documentation in R where the points *are* shuffled. 
+    # Also used to test errors
+    x = [0.21543139749966067; 0.18676067638651864; 0.12941923416171849; 0.37808260371144037; 0.08619595005015318; 0.15808995527500894]
+    y = [1.0000000000000000; 0.9981701480225297; 0.9945104441215969; 0.4421766790515620; 0.9323236302262247; 0.9963402960710632]
+
+    x_copy = deepcopy(x)
+    y_copy = deepcopy(y)
+
+    rw = [0.0; 1.0; 0.0; 1.0]
+    indices, reverse_indices = Deldir.sortperm_points!(x_copy, y_copy, rw)
+
+    @test x == x_copy[indices]
+    @test x[reverse_indices] == x_copy
+
+    @test y == y_copy[indices]
+    @test y[reverse_indices] == y_copy
+end

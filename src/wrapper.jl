@@ -1,19 +1,6 @@
-"""
-	remove_duplicates(x::Vector, y::Vector)
-
-Remove duplicate tuples `(x[i],y[i])` from the vectors `x` and `y`.
-"""
-function remove_duplicates(x::Vector, y::Vector)
-	points = [x y]
-	unique_points = unique(points, dims = 1)
-
-	return unique_points[:, 1], unique_points[:, 2]
-end
-
-
 mutable struct DeldirArguments
+    # The variables for the master Fortran subroutine
     # The variable names are copied from the R package
-
     x::Vector{Float64}
     y::Vector{Float64}
     rw::Vector{Float64}
@@ -24,7 +11,6 @@ mutable struct DeldirArguments
     tx::Vector{Float64}
     ty::Vector{Float64}
     epsilon::Float64
-    #= epsilon::Vector{Float64} =#
     delsgs::Vector{Float64}
     ndel::Vector{Int32}
     delsum::Vector{Float64}
@@ -33,8 +19,12 @@ mutable struct DeldirArguments
     dirsum::Vector{Float64}
     nerror::Vector{Int32}
 
+    # The variables for sorting the points
+    indices::Vector{Int32}
+    reverse_indices::Vector{Int32}
+
     function DeldirArguments(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-        ndel, delsum, dirsgs, ndir, dirsum, nerror)
+        ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
         if length(x) != length(y)
             throw(DimensionMismatch("Coordinate vectors must be of equal length"))
         end
@@ -48,16 +38,16 @@ mutable struct DeldirArguments
         if min_x < rw[1] || max_x > rw[2] || min_y < rw[3] || max_y > rw[4]
             throw(DomainError(rw, "Boundary window is too small"))
         end
-       
+
         new(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-               ndel, delsum, dirsgs, ndir, dirsum, nerror)
+            ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
     end
 end
 
 
 function DeldirArguments(x, y, rw, epsilon)
-    x, y = remove_duplicates(x, y)
-    num_points = length(x)
+    unique_x, unique_y = remove_duplicates(x, y)
+    num_points = length(unique_x)
 
     # Dummy points: Ignored!
     ndm = 0
@@ -66,8 +56,9 @@ function DeldirArguments(x, y, rw, epsilon)
     # The total number of points
     ntot = npd + 4
 
-    X = [zeros(4); x; zeros(4)]
-    Y = [zeros(4); y; zeros(4)]
+    indices, reverse_indices = sortperm_points!(unique_x, unique_y, rw)
+    X = [zeros(4); unique_x; zeros(4)]
+    Y = [zeros(4); unique_y; zeros(4)]
 
     # Set up fixed dimensioning constants
     ntdel = 4*npd
@@ -93,7 +84,36 @@ function DeldirArguments(x, y, rw, epsilon)
 
     DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, 
     madj, tx, ty, epsilon, delsgs, ndel, delsum, dirsgs, ndir, 
-    dirsum, nerror)
+    dirsum, nerror, indices, reverse_indices)
+end
+
+
+function sortperm_points!(x, y, rw)
+    n = length(x)
+    if n != length(y)
+        DimensionMismatch("x and y must have the same length")
+    end
+    
+    tx = similar(x)
+    ty = similar(y)
+
+    indices = Vector{Int32}(undef, n)
+    reverse_indices = similar(indices)
+    ilst = similar(indices)
+    nerror = Int32[1]
+
+    ccall((:binsrt_, Deldir_jll.libdeldir), Cvoid,
+        (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
+        Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
+        x, y, rw, n, indices,
+        reverse_indices, tx, ty, ilst, nerror
+    )
+
+    if nerror[] > 0
+        error("Mismatch between number of points and number of sorted points")
+    end
+
+    return indices, reverse_indices
 end
 
 
@@ -118,6 +138,8 @@ function error_handling!(da::DeldirArguments)
         resize!(da.dirsgs, tdir)
 
         @info "Fortran error $(error_number). Increasing madj to $(da.madj[])"
+    elseif error_number == 12
+        error("Vertices of triangle are collinear")
     elseif error_number == 14 || error_number == 15
         ndel_val = ceil(Int32, 1.2*ndel[])
         da.ndel = Int32[ndel_val]
@@ -138,28 +160,98 @@ function error_handling!(da::DeldirArguments)
 end
 
 
-function finalize(da::DeldirArguments)
+function get_delaunay(da::DeldirArguments)
     num_del = Int64(da.ndel[])
     delsgs  = reshape(da.delsgs[1:6*num_del], 6, num_del) |> transpose
+
+    del_df = DataFrames.DataFrame(
+        [Float64, Float64, Float64, Float64, Int64, Int64], 
+        ["x1", "y1", "x2", "y2", "ind1", "ind2"], 
+        num_del
+    )
+
+	del_df[!, "x1"] = delsgs[:, 1]
+	del_df[!, "y1"] = delsgs[:, 2]
+	del_df[!, "x2"] = delsgs[:, 3]
+	del_df[!, "y2"] = delsgs[:, 4]
+
+    ind1 = round.(Int, delsgs[:, 5])
+    del_df[!, "ind1"] = da.reverse_indices[ind1]
+
+    ind2 = round.(Int, delsgs[:, 6])
+    del_df[!, "ind2"] = da.reverse_indices[ind2]
+
+    return del_df
+end
     
+function get_voronoi(da::DeldirArguments)
     num_dir = Int64(da.ndir[])
-    dirsgs  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
+    vor  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
 
+    vor_df = DataFrames.DataFrame(
+        [Float64, Float64, Float64, Float64, Int64, Int64, Bool, Bool, Int64, Int64], 
+        ["x1", "y1", "x2", "y2", "ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"], 
+        num_dir
+    )
+
+	vor_df[!, "x1"] = vor[:, 1]
+	vor_df[!, "y1"] = vor[:, 2]
+	vor_df[!, "x2"] = vor[:, 3]
+    vor_df[!, "y2"] = vor[:, 4]
+	vor_df[!, "bp1"] = vor[:, 7] .== 1
+	vor_df[!, "bp2"] = vor[:, 8] .== 1
+
+    ind1 = round.(Int, vor[:, 5])
+    vor_df[!, "ind1"] = da.reverse_indices[ind1]
+
+    ind2 = round.(Int, vor[:, 6])
+    vor_df[!, "ind2"] = da.reverse_indices[ind2]
+
+    thirdv1 = Int.(vor[:, 9])
+    idx1 = thirdv1 .>= 0
+    thirdv1[idx1] = da.reverse_indices[thirdv1[idx1]]
+	vor_df[!, "thirdv1"] = thirdv1
+
+    thirdv2 = Int.(vor[:, 10])
+    idx2 = thirdv2 .>= 0
+    thirdv2[idx2] = da.reverse_indices[thirdv2[idx2]]
+    vor_df[!, "thirdv2"] = thirdv2
+    
+    return vor_df
+end
+
+function get_summary(da::DeldirArguments)
     npd = Int64(da.npd[1])
-    delsum = reshape(da.delsum, npd, 4)
-    dirsum = reshape(da.dirsum, npd, 3)
-    allsum = hcat(delsum, dirsum)
 
-    return delsgs, dirsgs, allsum
+    summary_df = DataFrames.DataFrame(
+        [Float64, Float64, Int64, Float64, Int64, Int64, Float64], 
+        ["x", "y", "ntri", "del_area", "n_tside", "nbpt", "vor_area"],
+        npd
+    )
+
+    delsum = reshape(da.delsum, npd, 4)
+    delsum = delsum[da.indices, :]
+	summary_df[!, "x"] = delsum[:, 1]
+	summary_df[!, "y"] = delsum[:, 2]
+	summary_df[!, "ntri"] = round.(Int, delsum[:, 3])
+    summary_df[!, "del_area"] = delsum[:, 4]
+
+    dirsum = reshape(da.dirsum, npd, 3)
+    dirsum = dirsum[da.indices, :]
+	summary_df[!, "n_tside"] = round.(Int, dirsum[:, 1])
+	summary_df[!, "nbpt"] = round.(Int, dirsum[:, 2])
+    summary_df[!, "vor_area"] = dirsum[:, 3]
+    
+    return summary_df
 end
 
 
 """
-	deldirwrapper(x::Vector{Float64}, y::Vector{Float64}; ...)
+	deldirwrapper!(da::DeldirArguments)
 
-Wrapper for the Fortran code that returns the output rather undigested.
+Wrapper for the Fortran code that returns the output undigested.
 """
-function deldirwrapper(da::DeldirArguments)
+function deldirwrapper!(da::DeldirArguments)
 	# Call Fortran routine
 	while da.nerror[] >= 1
 		ccall((:master_, Deldir_jll.libdeldir), Cvoid,
@@ -176,8 +268,7 @@ function deldirwrapper(da::DeldirArguments)
         error_handling!(da)
 	end
 
-    delsgs, dirsgs, allsum = finalize(da)
-	return delsgs, dirsgs, allsum
+    return da
 end
 
 
@@ -219,48 +310,11 @@ Likewise for the `bp2` entry and the second endpoint of the edge.
 """
 function deldir(x::Vector{Float64}, y::Vector{Float64}, rw::Vector = [0.0; 1.0; 0.0; 1.0], epsilon = 1e-9)
     da = DeldirArguments(x, y, rw, epsilon)
-    del, vor, summ = deldirwrapper(da)
+    deldirwrapper!(da)
 
-    del_df = DataFrames.DataFrame(
-        [Float64, Float64, Float64, Float64, Int, Int], 
-        [:x1, :y1, :x2, :y2, :ind1, :ind2], 
-        size(del, 1)
-    )
-	del_df[!, :x1]   = del[:, 1]
-	del_df[!, :y1]   = del[:, 2]
-	del_df[!, :x2]   = del[:, 3]
-	del_df[!, :y2]   = del[:, 4]
-	del_df[!, :ind1] = round.(Int, del[:, 5])
-	del_df[!, :ind2] = round.(Int, del[:, 6])
+    del = get_delaunay(da)
+    vor = get_voronoi(da)
+    summary = get_summary(da)
 
-    vor_df = DataFrames.DataFrame(
-        [Float64, Float64, Float64, Float64, Int, Int, Bool, Bool, Int, Int], 
-        [:x1, :y1, :x2, :y2, :ind1, :ind2, :bp1, :bp2, :thirdv1, :thirdv2], 
-        size(vor, 1)
-    )
-	vor_df[!, :x1]   = vor[:, 1]
-	vor_df[!, :y1]   = vor[:, 2]
-	vor_df[!, :x2]   = vor[:, 3]
-	vor_df[!, :y2]   = vor[:, 4]
-	vor_df[!, :ind1] = round.(Int, vor[:, 5])
-	vor_df[!, :ind2] = round.(Int, vor[:, 6])
-	vor_df[!, :bp1]  = vor[:, 7] .== 1
-	vor_df[!, :bp2]  = vor[:, 8] .== 1
-	vor_df[!, :thirdv1] = round.(Int, vor[:, 9])
-	vor_df[!, :thirdv2] = round.(Int, vor[:, 10])
-
-    summary_df = DataFrames.DataFrame(
-        [Float64, Float64, Int, Float64, Int, Int, Float64], 
-        [:x, :y, :ntri, :del_area, :n_tside, :nbpt, :vor_area],
-        size(summ, 1)
-    )
-	summary_df[!, :x]        = summ[:, 1]
-	summary_df[!, :y]        = summ[:, 2]
-	summary_df[!, :ntri]     = round.(Int, summ[:, 3])
-	summary_df[!, :del_area] = summ[:, 4]
-	summary_df[!, :n_tside]  = round.(Int, summ[:, 5])
-	summary_df[!, :nbpt]     = round.(Int, summ[:, 6])
-	summary_df[!, :vor_area] = summ[:, 7]
-
-    del_df, vor_df, summary_df
+    return del, vor, summary
 end
