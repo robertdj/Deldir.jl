@@ -143,8 +143,15 @@ end
 
         del, vor, _ = deldir(x, y)
 
-        A = voronoiarea(x, y)
-        @test A ≈ [0.46571555547895865; 0.3815986180640239; 0.15268582645701734]
+        Dx, Dy = edges(del)
+
+        @test filter(!isnan, Dx) == [0.75; 0.25; 0.5; 0.25; 0.5; 0.75]
+        @test filter(!isnan, Dy) == [0.25; 0.25; 0.75; 0.25; 0.75; 0.25]
+
+        Vx, Vy = edges(vor)
+
+        @test filter(!isnan, Vx) == [0.5; 0.5; 0.0; 0.5; 0.5; 1.0]
+        @test filter(!isnan, Vy) ≈ [0.4375; 0.0; 0.6875; 0.4375; 0.4375; 0.6875] atol = 0.001
     end
 end
 
