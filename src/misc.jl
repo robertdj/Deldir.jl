@@ -36,12 +36,12 @@ end
 Collect the edges of a dataframe in vectors that are ready to be plotted.
 """
 function edges(D::DataFrame)
-	x1 = D[:x1]
-	y1 = D[:y1]
-	x2 = D[:x2]
-	y2 = D[:y2]
+	x1 = D[!, "x1"]
+	y1 = D[!, "y1"]
+	x2 = D[!, "x2"]
+	y2 = D[!, "y2"]
 
-	N = size(D, 1)
+	N = DataFrames.nrow(D)
 	x = Array{Float64}(undef, 3*N)
 	y = similar(x)
 	
