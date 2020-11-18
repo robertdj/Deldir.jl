@@ -14,7 +14,7 @@ end
 """
 	voronoiarea(x::Vector, y::Vector, rw) -> Vector
 
-Compute the area of each Voronoi cell of the generators `(x[i],y[i])` in the vectors `x` and `y`.
+Compute the area of each Voronoi cell of the generators `(x[i], y[i])` in the vectors `x` and `y`.
 
 `rw` is the boundary window.
 """
@@ -23,8 +23,12 @@ function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0])
 	deldirwrapper!(da)
 
     npd = Int64(da.npd[1])
-	da.dirsum[2*npd + 1:3*npd]
+	unordered_area = @view da.dirsum[2*npd + 1:3*npd]
+
+	area = unordered_area[da.indices]
+	return area
 end
+
 
 """
 	edges(D) -> Vector, Vector

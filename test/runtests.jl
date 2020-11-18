@@ -123,9 +123,25 @@ end
         @test summ[!, ["ntri", "n_tside", "nbpt"]] == expected_summ[!, ["ntri", "n_tside", "nbpt"]]
     end
 
-    @testset "Order of points preserved in voronoiarea" begin
-        x = [0.344498249417418; 0.41848259261363174; 0.2527739528669366]
-        y = [0.14982667653372927; 0.818576659207491; 0.8773942783145248]
+    @testset "voronoiarea and deldir gives the same Voronoi area" begin
+        # Points that are *not* sorted. From R documentation
+        x = [2.3, 3.0, 7.0, 1.0, 3.0, 8.0]
+        y = [2.3, 3.0, 2.0, 5.0, 8.0, 9.0]
+
+        rw = [0.0; 10; 0; 10]
+        A = voronoiarea(x, y, rw)
+
+        @test A ≈ [11.737; 10.739; 26.839; 9.503; 21.306; 19.877] atol = 0.001
+
+        summary = deldir(x, y, rw)[3]
+        @test summary[!, "vor_area"] == A
+    end
+
+    @testset "Edges for plotting" begin
+        x = [0.25; 0.75; 0.5]
+        y = [0.25; 0.25; 0.75]
+
+        del, vor, _ = deldir(x, y)
 
         A = voronoiarea(x, y)
         @test A ≈ [0.46571555547895865; 0.3815986180640239; 0.15268582645701734]
