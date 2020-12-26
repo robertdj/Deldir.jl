@@ -87,7 +87,7 @@ Platform Info:
 
 To make it easier to install *Deldir* the Fortran code is cross-compiled using the [BinaryBuilder package](https://github.com/JuliaPackaging/BinaryBuilder.jl) and hosted in the [Julia Packaging organization](https://github.com/JuliaPackaging/Yggdrasil/tree/master/D/Deldir).
 
-I am not using the latest version of the Fortran code, because there is a tighter coupling with from version 0.1-16 and onwards.
+I am not using the latest version of the Fortran code, because there is a tighter coupling with R from version 0.1-16 and onwards.
 In particular, the use of the subroutines `fexit` and `rexit` from R cause problems even when linking against R's libraries.
 
 
