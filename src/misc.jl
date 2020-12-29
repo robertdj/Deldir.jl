@@ -46,14 +46,17 @@ function edges(D::DataFrame)
 	y = similar(x)
 	
 	nx = 0
-	for n = 1:N
-		x[nx+=1] = x1[n]
+	for n in 1:N
+        nx += 1
+		x[nx] = x1[n]
 		y[nx] = y1[n]
 
-		x[nx+=1] = x2[n]
+        nx += 1
+		x[nx] = x2[n]
 		y[nx] = y2[n]
 
-		x[nx+=1] = NaN
+        nx += 1
+		x[nx] = NaN
 		y[nx] = NaN
 	end
 
