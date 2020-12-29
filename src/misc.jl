@@ -18,8 +18,8 @@ Compute the area of each Voronoi cell of the generators `(x[i], y[i])` in the ve
 
 `rw` is the boundary window.
 """
-function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0])
-    da = DeldirArguments(x, y, rw, 1e-9)
+function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0], epsilon = 1e-9)
+    da = DeldirArguments(x, y, rw, epsilon)
 	deldirwrapper!(da)
 
     npd = Int64(da.npd[1])
