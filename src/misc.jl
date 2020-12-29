@@ -18,8 +18,8 @@ Compute the area of each Voronoi cell of the generators `(x[i], y[i])` in the ve
 
 `rw` is the boundary window.
 """
-function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0])
-    da = DeldirArguments(x, y, rw, 1e-9)
+function voronoiarea(x::Vector, y::Vector, rw::Vector=[0.0; 1.0; 0.0; 1.0], epsilon = 1e-9)
+    da = DeldirArguments(x, y, rw, epsilon)
 	deldirwrapper!(da)
 
     npd = Int64(da.npd[1])
@@ -46,14 +46,17 @@ function edges(D::DataFrame)
 	y = similar(x)
 	
 	nx = 0
-	for n = 1:N
-		x[nx+=1] = x1[n]
+	for n in 1:N
+        nx += 1
+		x[nx] = x1[n]
 		y[nx] = y1[n]
 
-		x[nx+=1] = x2[n]
+        nx += 1
+		x[nx] = x2[n]
 		y[nx] = y2[n]
 
-		x[nx+=1] = NaN
+        nx += 1
+		x[nx] = NaN
 		y[nx] = NaN
 	end
 
