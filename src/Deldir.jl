@@ -4,9 +4,9 @@ using DataFrames
 using Deldir_jll
 
 export
-	deldir,
-	voronoiarea,
-	edges
+    deldir,
+    voronoiarea,
+    edges
 
 include("wrapper.jl")
 include("misc.jl")
