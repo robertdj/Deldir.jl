@@ -106,7 +106,7 @@ function sortperm_points!(x, y, rw)
            Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
           x, y, rw, n, indices,
           reverse_indices, tx, ty, ilst, nerror
-         )
+    )
 
     if nerror[] > 0
         error("Mismatch between number of points and number of sorted points")
