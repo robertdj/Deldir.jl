@@ -1,7 +1,6 @@
 # Deldir
 
-[![Build Status](https://travis-ci.org/robertdj/Deldir.jl.svg?branch=master)](https://travis-ci.org/robertdj/Deldir.jl)
-[![AppVeyor](https://ci.appveyor.com/api/projects/status/ox6gslc6nm58sbka?svg=true)](https://ci.appveyor.com/project/robertdj/deldir-jl)
+[![Build Status](https://github.com/robertdj/Deldir.jl/workflows/CI/badge.svg)](https://github.com/robertdj/Deldir.jl/actions)
 [![codecov.io](https://codecov.io/github/robertdj/Deldir.jl/coverage.svg?branch=master)](https://codecov.io/github/robertdj/Deldir.jl?branch=master)
 
 [deldir](https://cran.r-project.org/package=deldir) is an R package for computing Delaunay triangulations and Voronoi/Dirichlet tesselations.
