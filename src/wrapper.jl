@@ -23,16 +23,16 @@ mutable struct DeldirArguments
     indices::Vector{Int32}
     reverse_indices::Vector{Int32}
 
-    function DeldirArguments(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs,
-        ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
+    function DeldirArguments(x, y, rw, npd, ntot, nadj, madj, tx, ty, epsilon, delsgs, ndel, 
+                             delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
         if length(x) != length(y)
             throw(DimensionMismatch("Coordinate vectors must be of equal length"))
         end
-       
+
         if epsilon < eps(Float64)
             throw(DomainError(epsilon, "Must be at least `eps(Float64)`"))
         end
-       
+
         min_x, max_x = extrema(x)
         min_y, max_y = extrema(y)
         if min_x < rw[1] || max_x > rw[2] || min_y < rw[3] || max_y > rw[4]
@@ -65,26 +65,25 @@ function DeldirArguments(x, y, rw, epsilon)
     ntdir = 3*npd
 
     # Set up dimensioning constants which might need to be increased
-	madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
+    madj_val = max(20, ceil(Int32, 3*sqrt(ntot)))
     madj = Int32[madj_val]
-	tadj = (madj_val + 1)*(ntot + 4)
-	ndel = Int32[madj_val*(madj_val + 1)/2]
-	tdel = 6*ndel[]
-	ndir = copy(ndel)
-	tdir = 10*ndir[]
+    tadj = (madj_val + 1)*(ntot + 4)
+    ndel = Int32[madj_val*(madj_val + 1)/2]
+    tdel = 6*ndel[]
+    ndir = copy(ndel)
+    tdir = 10*ndir[]
 
-	nadj   = zeros(Int32, tadj)
+    nadj   = zeros(Int32, tadj)
     tx     = zeros(Float64, npd)
     ty     = zeros(Float64, npd)
-	delsgs = zeros(Float64, tdel)
-	delsum = zeros(Float64, ntdel)
-	dirsgs = zeros(Float64, tdir)
-	dirsum = zeros(Float64, ntdir)
-	nerror = Int32[1]
+    delsgs = zeros(Float64, tdel)
+    delsum = zeros(Float64, ntdel)
+    dirsgs = zeros(Float64, tdir)
+    dirsum = zeros(Float64, ntdir)
+    nerror = Int32[1]
 
-    DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, 
-    madj, tx, ty, epsilon, delsgs, ndel, delsum, dirsgs, ndir, 
-    dirsum, nerror, indices, reverse_indices)
+    DeldirArguments(X, Y, rw, [Int32(npd)], [Int32(ntot)], nadj, madj, tx, ty, epsilon, 
+                    delsgs, ndel, delsum, dirsgs, ndir, dirsum, nerror, indices, reverse_indices)
 end
 
 
@@ -93,7 +92,7 @@ function sortperm_points!(x, y, rw)
     if n != length(y)
         DimensionMismatch("x and y must have the same length")
     end
-    
+
     tx = similar(x)
     ty = similar(y)
 
@@ -103,11 +102,11 @@ function sortperm_points!(x, y, rw)
     nerror = Int32[1]
 
     ccall((:binsrt_, Deldir_jll.libdeldir), Cvoid,
-        (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
-        Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
-        x, y, rw, n, indices,
-        reverse_indices, tx, ty, ilst, nerror
-    )
+          (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
+           Ref{Int32}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}),
+          x, y, rw, n, indices,
+          reverse_indices, tx, ty, ilst, nerror
+         )
 
     if nerror[] > 0
         error("Mismatch between number of points and number of sorted points")
@@ -170,10 +169,10 @@ function get_delaunay(da::DeldirArguments)
         num_del
     )
 
-	del_df[!, "x1"] = delsgs[:, 1]
-	del_df[!, "y1"] = delsgs[:, 2]
-	del_df[!, "x2"] = delsgs[:, 3]
-	del_df[!, "y2"] = delsgs[:, 4]
+    del_df[!, "x1"] = delsgs[:, 1]
+    del_df[!, "y1"] = delsgs[:, 2]
+    del_df[!, "x2"] = delsgs[:, 3]
+    del_df[!, "y2"] = delsgs[:, 4]
 
     ind1 = round.(Int, delsgs[:, 5])
     del_df[!, "ind1"] = da.reverse_indices[ind1]
@@ -183,7 +182,7 @@ function get_delaunay(da::DeldirArguments)
 
     return del_df
 end
-    
+
 function get_voronoi(da::DeldirArguments)
     num_dir = Int64(da.ndir[])
     vor  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
@@ -194,12 +193,12 @@ function get_voronoi(da::DeldirArguments)
         num_dir
     )
 
-	vor_df[!, "x1"] = vor[:, 1]
-	vor_df[!, "y1"] = vor[:, 2]
-	vor_df[!, "x2"] = vor[:, 3]
+    vor_df[!, "x1"] = vor[:, 1]
+    vor_df[!, "y1"] = vor[:, 2]
+    vor_df[!, "x2"] = vor[:, 3]
     vor_df[!, "y2"] = vor[:, 4]
-	vor_df[!, "bp1"] = vor[:, 7] .== 1
-	vor_df[!, "bp2"] = vor[:, 8] .== 1
+    vor_df[!, "bp1"] = vor[:, 7] .== 1
+    vor_df[!, "bp2"] = vor[:, 8] .== 1
 
     ind1 = round.(Int, vor[:, 5])
     vor_df[!, "ind1"] = da.reverse_indices[ind1]
@@ -210,13 +209,13 @@ function get_voronoi(da::DeldirArguments)
     thirdv1 = Int.(vor[:, 9])
     idx1 = thirdv1 .>= 0
     thirdv1[idx1] = da.reverse_indices[thirdv1[idx1]]
-	vor_df[!, "thirdv1"] = thirdv1
+    vor_df[!, "thirdv1"] = thirdv1
 
     thirdv2 = Int.(vor[:, 10])
     idx2 = thirdv2 .>= 0
     thirdv2[idx2] = da.reverse_indices[thirdv2[idx2]]
     vor_df[!, "thirdv2"] = thirdv2
-    
+
     return vor_df
 end
 
@@ -231,49 +230,49 @@ function get_summary(da::DeldirArguments)
 
     delsum = reshape(da.delsum, npd, 4)
     delsum = delsum[da.indices, :]
-	summary_df[!, "x"] = delsum[:, 1]
-	summary_df[!, "y"] = delsum[:, 2]
-	summary_df[!, "ntri"] = round.(Int, delsum[:, 3])
+    summary_df[!, "x"] = delsum[:, 1]
+    summary_df[!, "y"] = delsum[:, 2]
+    summary_df[!, "ntri"] = round.(Int, delsum[:, 3])
     summary_df[!, "del_area"] = delsum[:, 4]
 
     dirsum = reshape(da.dirsum, npd, 3)
     dirsum = dirsum[da.indices, :]
-	summary_df[!, "n_tside"] = round.(Int, dirsum[:, 1])
-	summary_df[!, "nbpt"] = round.(Int, dirsum[:, 2])
+    summary_df[!, "n_tside"] = round.(Int, dirsum[:, 1])
+    summary_df[!, "nbpt"] = round.(Int, dirsum[:, 2])
     summary_df[!, "vor_area"] = dirsum[:, 3]
-    
+
     return summary_df
 end
 
 
 """
-	deldirwrapper!(da::DeldirArguments)
+deldirwrapper!(da::DeldirArguments)
 
 Wrapper for the Fortran code that returns the output undigested.
 """
 function deldirwrapper!(da::DeldirArguments)
-	# Call Fortran routine
-	while da.nerror[] >= 1
-		ccall((:master_, Deldir_jll.libdeldir), Cvoid,
-		    (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
+    # Call Fortran routine
+    while da.nerror[] >= 1
+        ccall((:master_, Deldir_jll.libdeldir), Cvoid,
+            (Ref{Float64}, Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Int32}, 
              Ref{Int32}, Ref{Int32}, Ref{Float64}, Ref{Float64},
              Ref{Float64}, Ref{Float64}, Ref{Int32}, 
              Ref{Float64}, Ref{Float64}, Ref{Int32}, Ref{Float64}, Ref{Int32}),
-		    da.x, da.y, da.rw, da.npd, da.ntot,
+            da.x, da.y, da.rw, da.npd, da.ntot,
             da.nadj, da.madj, da.tx, da.ty,
             da.epsilon, da.delsgs, da.ndel,
             da.delsum, da.dirsgs, da.ndir, da.dirsum, da.nerror
-		)
+        )
 
         error_handling!(da)
-	end
+    end
 
     return da
 end
 
 
 """
-	deldir(x::Vector, y::Vector; ...)
+deldir(x::Vector, y::Vector; ...)
 
 Compute the Delaunay triangulation and Voronoi tesselation of the 2D points with x-coordinates `x` and y-coordinates `y`.
 
