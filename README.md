@@ -71,14 +71,14 @@ The script generating this output is available in the `examples` folder.
 The comparison plot is made with
 ```julia
 julia> versioninfo()
-Julia Version 1.1.0
-Commit 80516ca202* (2019-01-21 21:24 UTC)
+Julia Version 1.5.0
+Commit 96786e22cc (2020-08-01 23:44 UTC)
 Platform Info:
-  OS: Linux (x86_64-linux-gnu)
+  OS: Linux (x86_64-pc-linux-gnu)
   CPU: Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz
   WORD_SIZE: 64
   LIBM: libopenlibm
-  LLVM: libLLVM-6.0.1 (ORCJIT, skylake)
+  LLVM: libLLVM-9.0.1 (ORCJIT, skylake)
 ```
 
 
