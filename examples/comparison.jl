@@ -20,6 +20,7 @@ VoronoiCells.voronoicells(rand(8), rand(8), VoronoiCells.Rectangle(Point2(0, 0),
 
 # Simulation window
 W = [0.0 ; 10.0 ; 0.0 ; 10.0]
+rect = VoronoiCells.Rectangle(Point2(0, 0), Point2(10, 10))
 
 for (idx, n) in enumerate(N)
 	println(n)
@@ -31,8 +32,7 @@ for (idx, n) in enumerate(N)
 		Dtime[idx] = @elapsed Deldir.voronoiarea(x, y, W)
 	end
 
-    points = [Point2(x[k], y[k]) for k in 1:n]
-    rect = VoronoiCells.Rectangle(Point2(0, 0), Point2(10, 10))
+    local points = [Point2(x[k], y[k]) for k in 1:n]
 
     VCtime[idx] = @elapsed begin
         tess = VoronoiCells.voronoicells(points, rect)
