@@ -79,6 +79,11 @@ Platform Info:
   WORD_SIZE: 64
   LIBM: libopenlibm
   LLVM: libLLVM-9.0.1 (ORCJIT, skylake)
+
+(@v1.5) pkg> status
+Status `~/.julia/environments/v1.5/Project.toml`
+  [64db5801] Deldir v1.3.1
+  [e3e34ffb] VoronoiCells v0.2.0
 ```
 
 
