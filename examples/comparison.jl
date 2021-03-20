@@ -38,15 +38,19 @@ for (idx, n) in enumerate(N)
         tess = VoronoiCells.voronoicells(points, rect)
         VoronoiCells.voronoiarea(tess)
     end
+
+    GC.gc()
 end
 
 
 # ------------------------------------------------------------
 
 x = div.(N, 1000)
+maxy = 5 * ceil(maximum(filter(!isnan, Dtime)) / 5)
+
 scatter(x, Dtime, label = "Deldir")
 scatter!(x, VCtime, label = "VoronoiCells")
-plot!(xlabel = "number of points in 1000s", ylabel = "time in seconds", xticks = 0:20:100, yticks = 0:5:20)
+plot!(xlabel = "number of points in 1000s", ylabel = "time in seconds", xticks = 0:20:100, yticks = 0:5:maxy)
 plot!(tickfont = font(13), legendfont = font(12))
 
 savefig("comparison.png")
