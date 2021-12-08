@@ -163,85 +163,71 @@ function get_delaunay(da::DeldirArguments)
     num_del = Int64(da.ndel[])
     delsgs  = reshape(da.delsgs[1:6*num_del], 6, num_del) |> transpose
 
-    del_df = DataFrames.DataFrame(
-        [Float64, Float64, Float64, Float64, Int64, Int64], 
-        ["x1", "y1", "x2", "y2", "ind1", "ind2"], 
-        num_del
-    )
-
-    del_df[!, "x1"] = delsgs[:, 1]
-    del_df[!, "y1"] = delsgs[:, 2]
-    del_df[!, "x2"] = delsgs[:, 3]
-    del_df[!, "y2"] = delsgs[:, 4]
-
     ind1 = round.(Int, delsgs[:, 5])
-    del_df[!, "ind1"] = da.reverse_indices[ind1]
-
     ind2 = round.(Int, delsgs[:, 6])
-    del_df[!, "ind2"] = da.reverse_indices[ind2]
 
-    return del_df
+    DataFrames.DataFrame(
+        x1 = delsgs[:, 1],
+        y1 = delsgs[:, 2],
+        x2 = delsgs[:, 3],
+        y2 = delsgs[:, 4],
+        ind1 = da.reverse_indices[ind1],
+        ind2 = da.reverse_indices[ind2]
+    )
 end
+
 
 function get_voronoi(da::DeldirArguments)
     num_dir = Int64(da.ndir[])
     vor  = reshape(da.dirsgs[1:10*num_dir], 10, num_dir) |> transpose
 
-    vor_df = DataFrames.DataFrame(
-        [Float64, Float64, Float64, Float64, Int64, Int64, Bool, Bool, Int64, Int64], 
-        ["x1", "y1", "x2", "y2", "ind1", "ind2", "bp1", "bp2", "thirdv1", "thirdv2"], 
-        num_dir
-    )
-
-    vor_df[!, "x1"] = vor[:, 1]
-    vor_df[!, "y1"] = vor[:, 2]
-    vor_df[!, "x2"] = vor[:, 3]
-    vor_df[!, "y2"] = vor[:, 4]
-    vor_df[!, "bp1"] = vor[:, 7] .== 1
-    vor_df[!, "bp2"] = vor[:, 8] .== 1
-
     ind1 = round.(Int, vor[:, 5])
-    vor_df[!, "ind1"] = da.reverse_indices[ind1]
+    ind1 = da.reverse_indices[ind1]
 
     ind2 = round.(Int, vor[:, 6])
-    vor_df[!, "ind2"] = da.reverse_indices[ind2]
+    ind2 = da.reverse_indices[ind2]
 
     thirdv1 = Int.(vor[:, 9])
     idx1 = thirdv1 .>= 0
     thirdv1[idx1] = da.reverse_indices[thirdv1[idx1]]
-    vor_df[!, "thirdv1"] = thirdv1
 
     thirdv2 = Int.(vor[:, 10])
     idx2 = thirdv2 .>= 0
     thirdv2[idx2] = da.reverse_indices[thirdv2[idx2]]
-    vor_df[!, "thirdv2"] = thirdv2
 
-    return vor_df
+    DataFrames.DataFrame(
+        x1 = vor[:, 1],
+        y1 = vor[:, 2],
+        x2 = vor[:, 3],
+        y2 = vor[:, 4],
+        ind1 = ind1,
+        ind2 = ind2,
+        bp1 = vor[:, 7] .== 1,
+        bp2 = vor[:, 8] .== 1,
+        thirdv1 = thirdv1,
+        thirdv2 = thirdv2
+    )
 end
+
 
 function get_summary(da::DeldirArguments)
     npd = Int64(da.npd[1])
 
-    summary_df = DataFrames.DataFrame(
-        [Float64, Float64, Int64, Float64, Int64, Int64, Float64], 
-        ["x", "y", "ntri", "del_area", "n_tside", "nbpt", "vor_area"],
-        npd
-    )
-
     delsum = reshape(da.delsum, npd, 4)
     delsum = delsum[da.indices, :]
-    summary_df[!, "x"] = delsum[:, 1]
-    summary_df[!, "y"] = delsum[:, 2]
-    summary_df[!, "ntri"] = round.(Int, delsum[:, 3])
-    summary_df[!, "del_area"] = delsum[:, 4]
 
     dirsum = reshape(da.dirsum, npd, 3)
     dirsum = dirsum[da.indices, :]
-    summary_df[!, "n_tside"] = round.(Int, dirsum[:, 1])
-    summary_df[!, "nbpt"] = round.(Int, dirsum[:, 2])
-    summary_df[!, "vor_area"] = dirsum[:, 3]
-
-    return summary_df
+    
+    DataFrames.DataFrame(
+        x = delsum[:, 1],
+        y = delsum[:, 2],
+        ntri = round.(Int, delsum[:, 3]),
+        del_area = delsum[:, 4],
+        n_tside = round.(Int, dirsum[:, 1]),
+        nbpt = round.(Int, dirsum[:, 2]),
+        vor_area = dirsum[:, 3],
+    )
 end
 
 
