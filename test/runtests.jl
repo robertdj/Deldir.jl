@@ -1,13 +1,16 @@
 using Deldir
+using Random
 using Test
 
 import DataFrames
 
 
 @testset "Deldir output are expected dataframes" begin
-    N = rand(5:15)
-    x = rand(N)
-    y = rand(N)
+    rng = Random.Xoshiro(1)
+
+    N = rand(rng, 5:15)
+    x = rand(rng, N)
+    y = rand(rng, N)
     del, vor, summ = deldir(x, y)
 
     @test DataFrames.names(del) == ["x1", "y1", "x2", "y2", "ind1", "ind2"]
@@ -23,9 +26,11 @@ end
 
 
 @testset "Delaunay triangle corners are indexed correctly" begin
-    N = rand(5:15)
-    x = rand(N)
-    y = rand(N)
+    rng = Random.Xoshiro(1)
+
+    N = rand(rng, 5:15)
+    x = rand(rng, N)
+    y = rand(rng, N)
     del = deldir(x, y)[1]
 
     @test del[!, :x1] == x[del[!, :ind1]]
@@ -37,9 +42,11 @@ end
 
 
 @testset "Line segments of Voronoi cells are within window" begin
-    N = rand(5:15)
-    x = rand(N)
-    y = rand(N)
+    rng = Random.Xoshiro(1)
+
+    N = rand(rng, 5:15)
+    x = rand(rng, N)
+    y = rand(rng, N)
     vor = deldir(x, y)[2]
 
     @test all(0 .<= vor[!, :x1] .<= 1)
@@ -50,14 +57,16 @@ end
 
 
 @testset "Area of Voronoi cells sum to area of window" begin
-    N = rand(5:15)
-    x = rand(N)
-    y = rand(N)
+    rng = Random.Xoshiro(1)
+    
+    N = rand(rng, 5:15)
+    x = rand(rng, N)
+    y = rand(rng, N)
     A = voronoiarea(x, y)
 
     @test sum(A) ≈ 1 atol = 0.001
 
-    rw = [-rand(); 1 + rand(); -rand(); 1 + rand()]
+    rw = [-rand(rng); 1 + rand(rng); -rand(rng); 1 + rand(rng)]
     rw_area = (rw[2] - rw[1])*(rw[4] - rw[3])
 
     A = voronoiarea(x, y, rw)
@@ -158,17 +167,29 @@ end
 
 @testset "Errors with inappropriate input" begin
     @testset "Error when points are outside window" begin
-        x = [-rand(); rand()]
-        y = rand(2)
+        rng = Random.Xoshiro(1)
+
+        x = [-rand(rng); rand(rng)]
+        y = rand(rng, 2)
     
         @test_throws ErrorException deldir(x, y)
     end
     
     @testset "Error when number of x's and y's are not equal" begin
-        x = rand(rand(2:7))
-        y = rand(rand(8:12))
+        rng = Random.Xoshiro(1)
+
+        x = rand(rng, rand(rng, 2:7))
+        y = rand(rng, rand(rng, 8:12))
     
         @test_throws DimensionMismatch deldir(x, y)
+    end
+
+    @testset "Threshold for equality" begin
+        rng = Random.Xoshiro(1)
+
+        x = rand(rng, 3)
+        y = rand(rng, 3)
+        @test_throws DomainError deldir(x, y, [0.0; 1.0; 0.0; 1.0], -1)
     end
 end
 
