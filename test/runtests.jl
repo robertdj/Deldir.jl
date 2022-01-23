@@ -1,4 +1,5 @@
 using Deldir
+using Random
 using Test
 
 import DataFrames
@@ -169,6 +170,14 @@ end
         y = rand(rand(8:12))
     
         @test_throws DimensionMismatch deldir(x, y)
+    end
+
+    @testset "Threshold for equality" begin
+        rng = Random.Xoshiro(1)
+
+        x = rand(rng, 3)
+        y = rand(rng, 3)
+        @test_throws DomainError deldir(x, y, [0.0; 1.0; 0.0; 1.0], -1)
     end
 end
 
